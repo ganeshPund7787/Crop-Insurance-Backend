@@ -1,13 +1,12 @@
 ﻿using Authentication.Models;
-using Authentication.Data.Configurations;
 using Microsoft.EntityFrameworkCore;
 
 namespace Authentication.Data;
 
 public class AppDbContext : DbContext
 {
-    public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
-    {}
+    public AppDbContext(DbContextOptions<AppDbContext> options)
+        : base(options) { }
 
     public DbSet<User> Users => Set<User>();
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
@@ -20,13 +19,10 @@ public class AppDbContext : DbContext
     {
         base.OnModelCreating(modelBuilder);
 
-        // Auto-apply all IEntityTypeConfiguration<T> in this assembly
         modelBuilder.ApplyConfigurationsFromAssembly(
             typeof(AppDbContext).Assembly);
 
-        // ─── Global Soft Delete Filter ────────────────────────────────────
-        // Every query automatically excludes IsDeleted = true records
-        // No need to add .Where(x => !x.IsDeleted) anywhere in the app
+        // ── Global soft delete filters ─────────────────────────────────────
         modelBuilder.Entity<User>()
             .HasQueryFilter(x => !x.IsDeleted);
         modelBuilder.Entity<RefreshToken>()
@@ -41,17 +37,23 @@ public class AppDbContext : DbContext
             .HasQueryFilter(x => !x.IsDeleted);
     }
 
-    // ─── Auto-set UpdatedAtUtc on SaveChanges ─────────────────────────────────
-    // Senior tip: never manually set UpdatedAtUtc in services
-    // DbContext intercepts every save and stamps it automatically
     public override async Task<int> SaveChangesAsync(
         CancellationToken cancellationToken = default)
     {
         foreach (var entry in ChangeTracker.Entries<BaseEntity>())
         {
-            if (entry.State == EntityState.Modified)
+            switch (entry.State)
             {
-                entry.Entity.UpdatedAtUtc = DateTime.UtcNow;
+                // ✅ Only set UpdatedAtUtc on Modified — never on Added
+                case EntityState.Modified:
+                    entry.Entity.UpdatedAtUtc = DateTime.UtcNow;
+                    break;
+
+                // ✅ Ensure CreatedAtUtc is set on new entities
+                case EntityState.Added:
+                    if (entry.Entity.CreatedAtUtc == default)
+                        entry.Entity.CreatedAtUtc = DateTime.UtcNow;
+                    break;
             }
         }
 

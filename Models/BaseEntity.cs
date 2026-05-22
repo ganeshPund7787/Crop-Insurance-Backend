@@ -7,4 +7,4 @@ public abstract class BaseEntity
     public DateTime? UpdatedAtUtc { get; set; }
     public bool IsDeleted { get; set; } = false;
 }
-
+    

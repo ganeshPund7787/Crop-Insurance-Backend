@@ -1,0 +1,1056 @@
+2026-05-22 19:35:12.273 +05:30 [INF] Executed DbCommand (371ms) [Parameters=[], CommandType='"Text"', CommandTimeout='60']
+CREATE DATABASE [CropInsuranceDb2];
+2026-05-22 19:35:12.466 +05:30 [INF] Executed DbCommand (122ms) [Parameters=[], CommandType='"Text"', CommandTimeout='60']
+IF SERVERPROPERTY('EngineEdition') <> 5
+BEGIN
+    ALTER DATABASE [CropInsuranceDb2] SET READ_COMMITTED_SNAPSHOT ON;
+END;
+2026-05-22 19:35:12.507 +05:30 [INF] Executed DbCommand (13ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT 1
+2026-05-22 19:35:12.519 +05:30 [INF] Acquiring an exclusive lock for migration application. See https://aka.ms/efcore-docs-migrations-lock for more information if this takes too long.
+2026-05-22 19:35:12.593 +05:30 [INF] Executed DbCommand (66ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+DECLARE @result int;
+EXEC @result = sp_getapplock @Resource = '__EFMigrationsLock', @LockOwner = 'Session', @LockMode = 'Exclusive';
+SELECT @result
+2026-05-22 19:35:12.758 +05:30 [INF] Executed DbCommand (17ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+IF OBJECT_ID(N'[__EFMigrationsHistory]') IS NULL
+BEGIN
+    CREATE TABLE [__EFMigrationsHistory] (
+        [MigrationId] nvarchar(150) NOT NULL,
+        [ProductVersion] nvarchar(32) NOT NULL,
+        CONSTRAINT [PK___EFMigrationsHistory] PRIMARY KEY ([MigrationId])
+    );
+END;
+2026-05-22 19:35:12.795 +05:30 [INF] Executed DbCommand (1ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT 1
+2026-05-22 19:35:12.805 +05:30 [INF] Executed DbCommand (3ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT OBJECT_ID(N'[__EFMigrationsHistory]');
+2026-05-22 19:35:12.840 +05:30 [INF] Executed DbCommand (24ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT [MigrationId], [ProductVersion]
+FROM [__EFMigrationsHistory]
+ORDER BY [MigrationId];
+2026-05-22 19:35:12.882 +05:30 [INF] Applying migration '20260521125115_Initial'.
+2026-05-22 19:35:12.974 +05:30 [INF] Executed DbCommand (7ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE TABLE [Users] (
+    [Id] uniqueidentifier NOT NULL,
+    [FullName] nvarchar(100) NOT NULL,
+    [Email] nvarchar(150) NOT NULL,
+    [PasswordHash] nvarchar(max) NOT NULL,
+    [PhoneNumber] nvarchar(15) NOT NULL,
+    [Role] nvarchar(20) NOT NULL,
+    [IsActive] bit NOT NULL DEFAULT CAST(1 AS bit),
+    [EmailVerified] bit NOT NULL DEFAULT CAST(0 AS bit),
+    [LastLoginAtUtc] datetime2 NULL,
+    [CreatedAtUtc] datetime2 NOT NULL,
+    [UpdatedAtUtc] datetime2 NULL,
+    [IsDeleted] bit NOT NULL,
+    CONSTRAINT [PK_Users] PRIMARY KEY ([Id])
+);
+2026-05-22 19:35:12.982 +05:30 [INF] Executed DbCommand (4ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE TABLE [AgentProfiles] (
+    [Id] uniqueidentifier NOT NULL,
+    [AgentCode] nvarchar(20) NOT NULL,
+    [LicenseNumber] nvarchar(50) NOT NULL,
+    [AssignedDistrict] nvarchar(100) NOT NULL,
+    [IsVerified] bit NOT NULL,
+    [TotalClaimsHandled] int NOT NULL,
+    [UserId] uniqueidentifier NOT NULL,
+    [CreatedAtUtc] datetime2 NOT NULL,
+    [UpdatedAtUtc] datetime2 NULL,
+    [IsDeleted] bit NOT NULL,
+    CONSTRAINT [PK_AgentProfiles] PRIMARY KEY ([Id]),
+    CONSTRAINT [FK_AgentProfiles_Users_UserId] FOREIGN KEY ([UserId]) REFERENCES [Users] ([Id]) ON DELETE CASCADE
+);
+2026-05-22 19:35:12.987 +05:30 [INF] Executed DbCommand (3ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE TABLE [FarmerProfiles] (
+    [Id] uniqueidentifier NOT NULL,
+    [Village] nvarchar(100) NOT NULL,
+    [District] nvarchar(100) NOT NULL,
+    [State] nvarchar(100) NOT NULL,
+    [AadhaarNumber] nvarchar(12) NOT NULL,
+    [TotalLandAcres] decimal(10,2) NOT NULL,
+    [IsKycVerified] bit NOT NULL,
+    [UserId] uniqueidentifier NOT NULL,
+    [CreatedAtUtc] datetime2 NOT NULL,
+    [UpdatedAtUtc] datetime2 NULL,
+    [IsDeleted] bit NOT NULL,
+    CONSTRAINT [PK_FarmerProfiles] PRIMARY KEY ([Id]),
+    CONSTRAINT [FK_FarmerProfiles_Users_UserId] FOREIGN KEY ([UserId]) REFERENCES [Users] ([Id]) ON DELETE CASCADE
+);
+2026-05-22 19:35:12.992 +05:30 [INF] Executed DbCommand (2ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE TABLE [RefreshTokens] (
+    [Id] uniqueidentifier NOT NULL,
+    [Token] nvarchar(256) NOT NULL,
+    [ExpiresAtUtc] datetime2 NOT NULL,
+    [IsRevoked] bit NOT NULL DEFAULT CAST(0 AS bit),
+    [RevokedAtUtc] datetime2 NULL,
+    [ReplacedByToken] nvarchar(256) NULL,
+    [ReasonRevoked] nvarchar(200) NULL,
+    [UserId] uniqueidentifier NOT NULL,
+    [CreatedAtUtc] datetime2 NOT NULL,
+    [UpdatedAtUtc] datetime2 NULL,
+    [IsDeleted] bit NOT NULL,
+    CONSTRAINT [PK_RefreshTokens] PRIMARY KEY ([Id]),
+    CONSTRAINT [FK_RefreshTokens_Users_UserId] FOREIGN KEY ([UserId]) REFERENCES [Users] ([Id]) ON DELETE CASCADE
+);
+2026-05-22 19:35:13.000 +05:30 [INF] Executed DbCommand (4ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE TABLE [Farms] (
+    [Id] uniqueidentifier NOT NULL,
+    [FarmName] nvarchar(150) NOT NULL,
+    [AreaInAcres] decimal(10,2) NOT NULL,
+    [SoilType] nvarchar(50) NOT NULL,
+    [Location] nvarchar(200) NOT NULL,
+    [Latitude] float NOT NULL,
+    [Longitude] float NOT NULL,
+    [FarmerProfileId] uniqueidentifier NOT NULL,
+    [CreatedAtUtc] datetime2 NOT NULL,
+    [UpdatedAtUtc] datetime2 NULL,
+    [IsDeleted] bit NOT NULL,
+    CONSTRAINT [PK_Farms] PRIMARY KEY ([Id]),
+    CONSTRAINT [FK_Farms_FarmerProfiles_FarmerProfileId] FOREIGN KEY ([FarmerProfileId]) REFERENCES [FarmerProfiles] ([Id]) ON DELETE CASCADE
+);
+2026-05-22 19:35:13.007 +05:30 [INF] Executed DbCommand (3ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE TABLE [Crops] (
+    [Id] uniqueidentifier NOT NULL,
+    [CropName] nvarchar(100) NOT NULL,
+    [Season] nvarchar(20) NOT NULL,
+    [ExpectedYieldTons] decimal(10,2) NOT NULL,
+    [SowingDate] datetime2 NOT NULL,
+    [ExpectedHarvestDate] datetime2 NOT NULL,
+    [Status] nvarchar(20) NOT NULL,
+    [FarmId] uniqueidentifier NOT NULL,
+    [CreatedAtUtc] datetime2 NOT NULL,
+    [UpdatedAtUtc] datetime2 NULL,
+    [IsDeleted] bit NOT NULL,
+    CONSTRAINT [PK_Crops] PRIMARY KEY ([Id]),
+    CONSTRAINT [FK_Crops_Farms_FarmId] FOREIGN KEY ([FarmId]) REFERENCES [Farms] ([Id]) ON DELETE CASCADE
+);
+2026-05-22 19:35:13.018 +05:30 [INF] Executed DbCommand (6ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE UNIQUE INDEX [IX_AgentProfiles_AgentCode] ON [AgentProfiles] ([AgentCode]);
+2026-05-22 19:35:13.024 +05:30 [INF] Executed DbCommand (2ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE UNIQUE INDEX [IX_AgentProfiles_LicenseNumber] ON [AgentProfiles] ([LicenseNumber]);
+2026-05-22 19:35:13.030 +05:30 [INF] Executed DbCommand (2ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE UNIQUE INDEX [IX_AgentProfiles_UserId] ON [AgentProfiles] ([UserId]);
+2026-05-22 19:35:13.035 +05:30 [INF] Executed DbCommand (2ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE INDEX [IX_Crops_FarmId] ON [Crops] ([FarmId]);
+2026-05-22 19:35:13.041 +05:30 [INF] Executed DbCommand (2ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE UNIQUE INDEX [IX_FarmerProfiles_AadhaarNumber] ON [FarmerProfiles] ([AadhaarNumber]);
+2026-05-22 19:35:13.047 +05:30 [INF] Executed DbCommand (2ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE UNIQUE INDEX [IX_FarmerProfiles_UserId] ON [FarmerProfiles] ([UserId]);
+2026-05-22 19:35:13.051 +05:30 [INF] Executed DbCommand (1ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE INDEX [IX_Farms_FarmerProfileId] ON [Farms] ([FarmerProfileId]);
+2026-05-22 19:35:13.056 +05:30 [INF] Executed DbCommand (1ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE UNIQUE INDEX [IX_RefreshTokens_Token] ON [RefreshTokens] ([Token]);
+2026-05-22 19:35:13.063 +05:30 [INF] Executed DbCommand (3ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE INDEX [IX_RefreshTokens_UserId] ON [RefreshTokens] ([UserId]);
+2026-05-22 19:35:13.069 +05:30 [INF] Executed DbCommand (2ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE UNIQUE INDEX [IX_Users_Email] ON [Users] ([Email]);
+2026-05-22 19:35:13.104 +05:30 [INF] Executed DbCommand (30ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+INSERT INTO [__EFMigrationsHistory] ([MigrationId], [ProductVersion])
+VALUES (N'20260521125115_Initial', N'10.0.8');
+2026-05-22 19:35:13.134 +05:30 [INF] Applying migration '20260522134415_RefreshToken'.
+2026-05-22 19:35:13.169 +05:30 [INF] Executed DbCommand (10ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+INSERT INTO [__EFMigrationsHistory] ([MigrationId], [ProductVersion])
+VALUES (N'20260522134415_RefreshToken', N'10.0.8');
+2026-05-22 19:35:13.185 +05:30 [INF] Applying migration '20260522140455_IntialCreate'.
+2026-05-22 19:35:13.213 +05:30 [INF] Executed DbCommand (3ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+INSERT INTO [__EFMigrationsHistory] ([MigrationId], [ProductVersion])
+VALUES (N'20260522140455_IntialCreate', N'10.0.8');
+2026-05-22 19:35:13.231 +05:30 [INF] Executed DbCommand (7ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+DECLARE @result int;
+EXEC @result = sp_releaseapplock @Resource = '__EFMigrationsLock', @LockOwner = 'Session';
+SELECT @result
+2026-05-22 19:35:13.765 +05:30 [INF] Executed DbCommand (8ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT CASE
+    WHEN EXISTS (
+        SELECT 1
+        FROM [Users] AS [u]
+        WHERE [u].[IsDeleted] = CAST(0 AS bit) AND [u].[Role] = N'Admin') THEN CAST(1 AS bit)
+    ELSE CAST(0 AS bit)
+END
+2026-05-22 19:35:15.228 +05:30 [INF] Executed DbCommand (118ms) [Parameters=[@p0='?' (DbType = Guid), @p1='?' (DbType = DateTime2), @p2='?' (Size = 150), @p3='?' (DbType = Boolean), @p4='?' (Size = 100), @p5='?' (DbType = Boolean), @p6='?' (DbType = DateTime2), @p7='?' (Size = 4000), @p8='?' (Size = 15), @p9='?' (Size = 20), @p10='?' (DbType = DateTime2)], CommandType='"Text"', CommandTimeout='30']
+SET IMPLICIT_TRANSACTIONS OFF;
+SET NOCOUNT ON;
+INSERT INTO [Users] ([Id], [CreatedAtUtc], [Email], [EmailVerified], [FullName], [IsDeleted], [LastLoginAtUtc], [PasswordHash], [PhoneNumber], [Role], [UpdatedAtUtc])
+OUTPUT INSERTED.[IsActive]
+VALUES (@p0, @p1, @p2, @p3, @p4, @p5, @p6, @p7, @p8, @p9, @p10);
+2026-05-22 19:35:15.270 +05:30 [INF] Admin account seeded: admin@cropinsurance.com
+2026-05-22 19:35:15.297 +05:30 [INF] Executed DbCommand (16ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT CASE
+    WHEN EXISTS (
+        SELECT 1
+        FROM [Users] AS [u]
+        WHERE [u].[IsDeleted] = CAST(0 AS bit) AND [u].[Role] = N'InsuranceAgent') THEN CAST(1 AS bit)
+    ELSE CAST(0 AS bit)
+END
+2026-05-22 19:35:16.419 +05:30 [INF] Executed DbCommand (16ms) [Parameters=[@p0='?' (DbType = Guid), @p1='?' (DbType = DateTime2), @p2='?' (Size = 150), @p3='?' (DbType = Boolean), @p4='?' (Size = 100), @p5='?' (DbType = Boolean), @p6='?' (DbType = DateTime2), @p7='?' (Size = 4000), @p8='?' (Size = 15), @p9='?' (Size = 20), @p10='?' (DbType = DateTime2), @p11='?' (DbType = Guid), @p12='?' (Size = 20), @p13='?' (Size = 100), @p14='?' (DbType = DateTime2), @p15='?' (DbType = Boolean), @p16='?' (DbType = Boolean), @p17='?' (Size = 50), @p18='?' (DbType = Int32), @p19='?' (DbType = DateTime2), @p20='?' (DbType = Guid)], CommandType='"Text"', CommandTimeout='30']
+SET NOCOUNT ON;
+INSERT INTO [Users] ([Id], [CreatedAtUtc], [Email], [EmailVerified], [FullName], [IsDeleted], [LastLoginAtUtc], [PasswordHash], [PhoneNumber], [Role], [UpdatedAtUtc])
+OUTPUT INSERTED.[IsActive]
+VALUES (@p0, @p1, @p2, @p3, @p4, @p5, @p6, @p7, @p8, @p9, @p10);
+INSERT INTO [AgentProfiles] ([Id], [AgentCode], [AssignedDistrict], [CreatedAtUtc], [IsDeleted], [IsVerified], [LicenseNumber], [TotalClaimsHandled], [UpdatedAtUtc], [UserId])
+VALUES (@p11, @p12, @p13, @p14, @p15, @p16, @p17, @p18, @p19, @p20);
+2026-05-22 19:35:16.427 +05:30 [INF] Sample agent seeded: agent@cropinsurance.com
+2026-05-22 19:35:16.429 +05:30 [INF] Database seeding completed.
+2026-05-22 19:35:54.435 +05:30 [INF] Executed DbCommand (30ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT 1
+2026-05-22 19:35:54.491 +05:30 [INF] Acquiring an exclusive lock for migration application. See https://aka.ms/efcore-docs-migrations-lock for more information if this takes too long.
+2026-05-22 19:35:54.527 +05:30 [INF] Executed DbCommand (28ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+DECLARE @result int;
+EXEC @result = sp_getapplock @Resource = '__EFMigrationsLock', @LockOwner = 'Session', @LockMode = 'Exclusive';
+SELECT @result
+2026-05-22 19:35:54.612 +05:30 [INF] Executed DbCommand (2ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+IF OBJECT_ID(N'[__EFMigrationsHistory]') IS NULL
+BEGIN
+    CREATE TABLE [__EFMigrationsHistory] (
+        [MigrationId] nvarchar(150) NOT NULL,
+        [ProductVersion] nvarchar(32) NOT NULL,
+        CONSTRAINT [PK___EFMigrationsHistory] PRIMARY KEY ([MigrationId])
+    );
+END;
+2026-05-22 19:35:54.633 +05:30 [INF] Executed DbCommand (1ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT 1
+2026-05-22 19:35:54.639 +05:30 [INF] Executed DbCommand (1ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT OBJECT_ID(N'[__EFMigrationsHistory]');
+2026-05-22 19:35:54.649 +05:30 [INF] Executed DbCommand (3ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT [MigrationId], [ProductVersion]
+FROM [__EFMigrationsHistory]
+ORDER BY [MigrationId];
+2026-05-22 19:35:54.669 +05:30 [INF] No migrations were applied. The database is already up to date.
+2026-05-22 19:35:54.679 +05:30 [INF] Executed DbCommand (7ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+DECLARE @result int;
+EXEC @result = sp_releaseapplock @Resource = '__EFMigrationsLock', @LockOwner = 'Session';
+SELECT @result
+2026-05-22 19:35:55.001 +05:30 [INF] Executed DbCommand (4ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT CASE
+    WHEN EXISTS (
+        SELECT 1
+        FROM [Users] AS [u]
+        WHERE [u].[IsDeleted] = CAST(0 AS bit) AND [u].[Role] = N'Admin') THEN CAST(1 AS bit)
+    ELSE CAST(0 AS bit)
+END
+2026-05-22 19:35:55.010 +05:30 [INF] Admin account already exists. Skipping.
+2026-05-22 19:35:55.022 +05:30 [INF] Executed DbCommand (3ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT CASE
+    WHEN EXISTS (
+        SELECT 1
+        FROM [Users] AS [u]
+        WHERE [u].[IsDeleted] = CAST(0 AS bit) AND [u].[Role] = N'InsuranceAgent') THEN CAST(1 AS bit)
+    ELSE CAST(0 AS bit)
+END
+2026-05-22 19:35:55.027 +05:30 [INF] Agent account already exists. Skipping.
+2026-05-22 19:35:55.029 +05:30 [INF] Database seeding completed.
+2026-05-22 19:36:29.420 +05:30 [INF] Executed DbCommand (27ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT 1
+2026-05-22 19:36:29.476 +05:30 [INF] Acquiring an exclusive lock for migration application. See https://aka.ms/efcore-docs-migrations-lock for more information if this takes too long.
+2026-05-22 19:36:29.507 +05:30 [INF] Executed DbCommand (24ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+DECLARE @result int;
+EXEC @result = sp_getapplock @Resource = '__EFMigrationsLock', @LockOwner = 'Session', @LockMode = 'Exclusive';
+SELECT @result
+2026-05-22 19:36:29.617 +05:30 [INF] Executed DbCommand (2ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+IF OBJECT_ID(N'[__EFMigrationsHistory]') IS NULL
+BEGIN
+    CREATE TABLE [__EFMigrationsHistory] (
+        [MigrationId] nvarchar(150) NOT NULL,
+        [ProductVersion] nvarchar(32) NOT NULL,
+        CONSTRAINT [PK___EFMigrationsHistory] PRIMARY KEY ([MigrationId])
+    );
+END;
+2026-05-22 19:36:29.643 +05:30 [INF] Executed DbCommand (1ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT 1
+2026-05-22 19:36:29.650 +05:30 [INF] Executed DbCommand (2ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT OBJECT_ID(N'[__EFMigrationsHistory]');
+2026-05-22 19:36:29.665 +05:30 [INF] Executed DbCommand (4ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT [MigrationId], [ProductVersion]
+FROM [__EFMigrationsHistory]
+ORDER BY [MigrationId];
+2026-05-22 19:36:29.685 +05:30 [INF] No migrations were applied. The database is already up to date.
+2026-05-22 19:36:29.694 +05:30 [INF] Executed DbCommand (5ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+DECLARE @result int;
+EXEC @result = sp_releaseapplock @Resource = '__EFMigrationsLock', @LockOwner = 'Session';
+SELECT @result
+2026-05-22 19:36:30.000 +05:30 [INF] Executed DbCommand (4ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT CASE
+    WHEN EXISTS (
+        SELECT 1
+        FROM [Users] AS [u]
+        WHERE [u].[IsDeleted] = CAST(0 AS bit) AND [u].[Role] = N'Admin') THEN CAST(1 AS bit)
+    ELSE CAST(0 AS bit)
+END
+2026-05-22 19:36:30.012 +05:30 [INF] Admin account already exists. Skipping.
+2026-05-22 19:36:30.020 +05:30 [INF] Executed DbCommand (2ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT CASE
+    WHEN EXISTS (
+        SELECT 1
+        FROM [Users] AS [u]
+        WHERE [u].[IsDeleted] = CAST(0 AS bit) AND [u].[Role] = N'InsuranceAgent') THEN CAST(1 AS bit)
+    ELSE CAST(0 AS bit)
+END
+2026-05-22 19:36:30.025 +05:30 [INF] Agent account already exists. Skipping.
+2026-05-22 19:36:30.026 +05:30 [INF] Database seeding completed.
+2026-05-22 19:40:23.729 +05:30 [INF] Executed DbCommand (40ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT 1
+2026-05-22 19:40:23.796 +05:30 [INF] Acquiring an exclusive lock for migration application. See https://aka.ms/efcore-docs-migrations-lock for more information if this takes too long.
+2026-05-22 19:40:23.840 +05:30 [INF] Executed DbCommand (35ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+DECLARE @result int;
+EXEC @result = sp_getapplock @Resource = '__EFMigrationsLock', @LockOwner = 'Session', @LockMode = 'Exclusive';
+SELECT @result
+2026-05-22 19:40:23.949 +05:30 [INF] Executed DbCommand (3ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+IF OBJECT_ID(N'[__EFMigrationsHistory]') IS NULL
+BEGIN
+    CREATE TABLE [__EFMigrationsHistory] (
+        [MigrationId] nvarchar(150) NOT NULL,
+        [ProductVersion] nvarchar(32) NOT NULL,
+        CONSTRAINT [PK___EFMigrationsHistory] PRIMARY KEY ([MigrationId])
+    );
+END;
+2026-05-22 19:40:23.978 +05:30 [INF] Executed DbCommand (1ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT 1
+2026-05-22 19:40:23.988 +05:30 [INF] Executed DbCommand (1ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT OBJECT_ID(N'[__EFMigrationsHistory]');
+2026-05-22 19:40:24.001 +05:30 [INF] Executed DbCommand (6ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT [MigrationId], [ProductVersion]
+FROM [__EFMigrationsHistory]
+ORDER BY [MigrationId];
+2026-05-22 19:40:24.020 +05:30 [INF] No migrations were applied. The database is already up to date.
+2026-05-22 19:40:24.026 +05:30 [INF] Executed DbCommand (3ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+DECLARE @result int;
+EXEC @result = sp_releaseapplock @Resource = '__EFMigrationsLock', @LockOwner = 'Session';
+SELECT @result
+2026-05-22 19:40:24.363 +05:30 [INF] Executed DbCommand (6ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT CASE
+    WHEN EXISTS (
+        SELECT 1
+        FROM [Users] AS [u]
+        WHERE [u].[IsDeleted] = CAST(0 AS bit) AND [u].[Role] = N'Admin') THEN CAST(1 AS bit)
+    ELSE CAST(0 AS bit)
+END
+2026-05-22 19:40:24.377 +05:30 [INF] Admin account already exists. Skipping.
+2026-05-22 19:40:24.390 +05:30 [INF] Executed DbCommand (3ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT CASE
+    WHEN EXISTS (
+        SELECT 1
+        FROM [Users] AS [u]
+        WHERE [u].[IsDeleted] = CAST(0 AS bit) AND [u].[Role] = N'InsuranceAgent') THEN CAST(1 AS bit)
+    ELSE CAST(0 AS bit)
+END
+2026-05-22 19:40:24.394 +05:30 [INF] Agent account already exists. Skipping.
+2026-05-22 19:40:24.395 +05:30 [INF] Database seeding completed.
+2026-05-22 19:42:13.819 +05:30 [WRN] Failed to determine the https port for redirect.
+2026-05-22 19:42:16.490 +05:30 [INF] Executed DbCommand (37ms) [Parameters=[@Trim='?' (Size = 150)], CommandType='"Text"', CommandTimeout='30']
+SELECT CASE
+    WHEN EXISTS (
+        SELECT 1
+        FROM [Users] AS [u]
+        WHERE [u].[IsDeleted] = CAST(0 AS bit) AND [u].[Email] = @Trim) THEN CAST(1 AS bit)
+    ELSE CAST(0 AS bit)
+END
+2026-05-22 19:42:17.684 +05:30 [INF] Executed DbCommand (37ms) [Parameters=[@p0='?' (DbType = Guid), @p1='?' (DbType = DateTime2), @p2='?' (Size = 150), @p3='?' (Size = 100), @p4='?' (DbType = Boolean), @p5='?' (DbType = DateTime2), @p6='?' (Size = 4000), @p7='?' (Size = 15), @p8='?' (Size = 20), @p9='?' (DbType = DateTime2), @p10='?' (DbType = Guid), @p11='?' (Size = 12), @p12='?' (DbType = DateTime2), @p13='?' (Size = 100), @p14='?' (DbType = Boolean), @p15='?' (DbType = Boolean), @p16='?' (Size = 100), @p17='?' (Precision = 10) (Scale = 2) (DbType = Decimal), @p18='?' (DbType = DateTime2), @p19='?' (DbType = Guid), @p20='?' (Size = 100), @p21='?' (DbType = Guid), @p22='?' (DbType = DateTime2), @p23='?' (DbType = DateTime2), @p24='?' (DbType = Boolean), @p25='?' (Size = 200), @p26='?' (Size = 256), @p27='?' (DbType = DateTime2), @p28='?' (Size = 256), @p29='?' (DbType = DateTime2), @p30='?' (DbType = Guid)], CommandType='"Text"', CommandTimeout='30']
+SET NOCOUNT ON;
+INSERT INTO [Users] ([Id], [CreatedAtUtc], [Email], [FullName], [IsDeleted], [LastLoginAtUtc], [PasswordHash], [PhoneNumber], [Role], [UpdatedAtUtc])
+OUTPUT INSERTED.[EmailVerified], INSERTED.[IsActive]
+VALUES (@p0, @p1, @p2, @p3, @p4, @p5, @p6, @p7, @p8, @p9);
+INSERT INTO [FarmerProfiles] ([Id], [AadhaarNumber], [CreatedAtUtc], [District], [IsDeleted], [IsKycVerified], [State], [TotalLandAcres], [UpdatedAtUtc], [UserId], [Village])
+VALUES (@p10, @p11, @p12, @p13, @p14, @p15, @p16, @p17, @p18, @p19, @p20);
+INSERT INTO [RefreshTokens] ([Id], [CreatedAtUtc], [ExpiresAtUtc], [IsDeleted], [ReasonRevoked], [ReplacedByToken], [RevokedAtUtc], [Token], [UpdatedAtUtc], [UserId])
+OUTPUT INSERTED.[IsRevoked]
+VALUES (@p21, @p22, @p23, @p24, @p25, @p26, @p27, @p28, @p29, @p30);
+2026-05-22 19:42:17.823 +05:30 [INF] POST /api/auth/register → 200 in 4003ms
+2026-05-22 19:42:59.175 +05:30 [INF] Executed DbCommand (41ms) [Parameters=[@Trim='?' (Size = 150)], CommandType='"Text"', CommandTimeout='30']
+SELECT [u0].[Id], [u0].[CreatedAtUtc], [u0].[Email], [u0].[EmailVerified], [u0].[FullName], [u0].[IsActive], [u0].[IsDeleted], [u0].[LastLoginAtUtc], [u0].[PasswordHash], [u0].[PhoneNumber], [u0].[Role], [u0].[UpdatedAtUtc], [r0].[Id], [r0].[CreatedAtUtc], [r0].[ExpiresAtUtc], [r0].[IsDeleted], [r0].[IsRevoked], [r0].[ReasonRevoked], [r0].[ReplacedByToken], [r0].[RevokedAtUtc], [r0].[Token], [r0].[UpdatedAtUtc], [r0].[UserId]
+FROM (
+    SELECT TOP(1) [u].[Id], [u].[CreatedAtUtc], [u].[Email], [u].[EmailVerified], [u].[FullName], [u].[IsActive], [u].[IsDeleted], [u].[LastLoginAtUtc], [u].[PasswordHash], [u].[PhoneNumber], [u].[Role], [u].[UpdatedAtUtc]
+    FROM [Users] AS [u]
+    WHERE [u].[IsDeleted] = CAST(0 AS bit) AND [u].[Email] = @Trim
+) AS [u0]
+LEFT JOIN (
+    SELECT [r].[Id], [r].[CreatedAtUtc], [r].[ExpiresAtUtc], [r].[IsDeleted], [r].[IsRevoked], [r].[ReasonRevoked], [r].[ReplacedByToken], [r].[RevokedAtUtc], [r].[Token], [r].[UpdatedAtUtc], [r].[UserId]
+    FROM [RefreshTokens] AS [r]
+    WHERE [r].[IsDeleted] = CAST(0 AS bit)
+) AS [r0] ON [u0].[Id] = [r0].[UserId]
+ORDER BY [u0].[Id]
+2026-05-22 19:43:00.051 +05:30 [INF] Executed DbCommand (20ms) [Parameters=[@p10='?' (DbType = Guid), @p0='?' (DbType = DateTime2), @p1='?' (DbType = DateTime2), @p2='?' (DbType = Boolean), @p3='?' (DbType = Boolean), @p4='?' (Size = 200), @p5='?' (Size = 256), @p6='?' (DbType = DateTime2), @p7='?' (Size = 256), @p8='?' (DbType = DateTime2), @p9='?' (DbType = Guid), @p13='?' (DbType = Guid), @p11='?' (DbType = DateTime2), @p12='?' (DbType = DateTime2)], CommandType='"Text"', CommandTimeout='30']
+SET NOCOUNT ON;
+UPDATE [RefreshTokens] SET [CreatedAtUtc] = @p0, [ExpiresAtUtc] = @p1, [IsDeleted] = @p2, [IsRevoked] = @p3, [ReasonRevoked] = @p4, [ReplacedByToken] = @p5, [RevokedAtUtc] = @p6, [Token] = @p7, [UpdatedAtUtc] = @p8, [UserId] = @p9
+OUTPUT 1
+WHERE [Id] = @p10;
+UPDATE [Users] SET [LastLoginAtUtc] = @p11, [UpdatedAtUtc] = @p12
+OUTPUT 1
+WHERE [Id] = @p13;
+2026-05-22 19:43:00.072 +05:30 [ERR] Unhandled exception on POST /api/auth/login
+Microsoft.EntityFrameworkCore.DbUpdateConcurrencyException: The database operation was expected to affect 1 row(s), but actually affected 0 row(s); data may have been modified or deleted since entities were loaded. See https://go.microsoft.com/fwlink/?LinkId=527962 for information on understanding and handling optimistic concurrency exceptions.
+   at Microsoft.EntityFrameworkCore.Update.AffectedCountModificationCommandBatch.ThrowAggregateUpdateConcurrencyExceptionAsync(RelationalDataReader reader, Int32 commandIndex, Int32 expectedRowsAffected, Int32 rowsAffected, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Update.AffectedCountModificationCommandBatch.ConsumeResultSetWithRowsAffectedOnlyAsync(Int32 commandIndex, RelationalDataReader reader, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Update.AffectedCountModificationCommandBatch.ConsumeAsync(RelationalDataReader reader, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Update.ReaderModificationCommandBatch.ExecuteAsync(IRelationalConnection connection, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Update.ReaderModificationCommandBatch.ExecuteAsync(IRelationalConnection connection, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.SqlServer.Update.Internal.SqlServerModificationCommandBatch.ExecuteAsync(IRelationalConnection connection, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Update.Internal.BatchExecutor.ExecuteAsync(IEnumerable`1 commandBatches, IRelationalConnection connection, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Update.Internal.BatchExecutor.ExecuteAsync(IEnumerable`1 commandBatches, IRelationalConnection connection, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Update.Internal.BatchExecutor.ExecuteAsync(IEnumerable`1 commandBatches, IRelationalConnection connection, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalDatabase.SaveChangesAsync(IList`1 entries, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.ChangeTracking.Internal.StateManager.SaveChangesAsync(IList`1 entriesToSave, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.ChangeTracking.Internal.StateManager.SaveChangesAsync(StateManager stateManager, Boolean acceptAllChangesOnSuccess, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.SqlServer.Storage.Internal.SqlServerExecutionStrategy.ExecuteAsync[TState,TResult](TState state, Func`4 operation, Func`4 verifySucceeded, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.DbContext.SaveChangesAsync(Boolean acceptAllChangesOnSuccess, CancellationToken cancellationToken)
+   at Authentication.Data.AppDbContext.SaveChangesAsync(CancellationToken cancellationToken) in E:\.Net\Projects\Crop-Insurance-Farmer-Risk-Intelligence-Platform\Crop-Insurance\Backend-Crop-Insurrance\Backend-Crop-Insurrance\Data\AppDbContext.cs:line 58
+   at Authentication.Services.BaseRepository`1.SaveChangesAsync() in E:\.Net\Projects\Crop-Insurance-Farmer-Risk-Intelligence-Platform\Crop-Insurance\Backend-Crop-Insurrance\Backend-Crop-Insurrance\Services\BaseRepository.cs:line 93
+   at Authentication.Services.AuthService.LoginAsync(LoginRequestDto request) in E:\.Net\Projects\Crop-Insurance-Farmer-Risk-Intelligence-Platform\Crop-Insurance\Backend-Crop-Insurrance\Backend-Crop-Insurrance\Services\AuthService.cs:line 153
+   at Authentication.Controllers.AuthController.Login(LoginRequestDto request) in E:\.Net\Projects\Crop-Insurance-Farmer-Risk-Intelligence-Platform\Crop-Insurance\Backend-Crop-Insurrance\Backend-Crop-Insurrance\Controllers\AuthController.cs:line 47
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ActionMethodExecutor.TaskOfIActionResultExecutor.Execute(ActionContext actionContext, IActionResultTypeMapper mapper, ObjectMethodExecutor executor, Object controller, Object[] arguments)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.<InvokeActionMethodAsync>g__Awaited|12_0(ControllerActionInvoker invoker, ValueTask`1 actionResultValueTask)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.<InvokeNextActionFilterAsync>g__Awaited|10_0(ControllerActionInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.Rethrow(ActionExecutedContextSealed context)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.Next(State& next, Scope& scope, Object& state, Boolean& isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.<InvokeInnerFilterAsync>g__Awaited|13_0(ControllerActionInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeFilterPipelineAsync>g__Awaited|20_0(ResourceInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Awaited|17_0(ResourceInvoker invoker, Task task, IDisposable scope)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Awaited|17_0(ResourceInvoker invoker, Task task, IDisposable scope)
+   at Microsoft.AspNetCore.Authorization.AuthorizationMiddleware.Invoke(HttpContext context)
+   at Microsoft.AspNetCore.Authentication.AuthenticationMiddleware.Invoke(HttpContext context)
+   at Microsoft.AspNetCore.RateLimiting.RateLimitingMiddleware.InvokeInternal(HttpContext context, EnableRateLimitingAttribute enableRateLimitingAttribute)
+   at Authentication.Middleware.RequestLoggingMiddleware.InvokeAsync(HttpContext context) in E:\.Net\Projects\Crop-Insurance-Farmer-Risk-Intelligence-Platform\Crop-Insurance\Backend-Crop-Insurrance\Backend-Crop-Insurrance\Middleware\RequestLoggingMiddleware.cs:line 24
+   at Authentication.Middleware.SecurityHeadersMiddleware.InvokeAsync(HttpContext context) in E:\.Net\Projects\Crop-Insurance-Farmer-Risk-Intelligence-Platform\Crop-Insurance\Backend-Crop-Insurrance\Backend-Crop-Insurrance\Middleware\SecurityHeadersMiddleware.cs:line 48
+   at Authentication.Middleware.GlobalExceptionMiddleware.InvokeAsync(HttpContext context) in E:\.Net\Projects\Crop-Insurance-Farmer-Risk-Intelligence-Platform\Crop-Insurance\Backend-Crop-Insurrance\Backend-Crop-Insurrance\Middleware\GlobalExceptionMiddleware.cs:line 24
+2026-05-22 19:47:56.924 +05:30 [INF] Executed DbCommand (4ms) [Parameters=[@Trim='?' (Size = 150)], CommandType='"Text"', CommandTimeout='30']
+SELECT CASE
+    WHEN EXISTS (
+        SELECT 1
+        FROM [Users] AS [u]
+        WHERE [u].[IsDeleted] = CAST(0 AS bit) AND [u].[Email] = @Trim) THEN CAST(1 AS bit)
+    ELSE CAST(0 AS bit)
+END
+2026-05-22 19:47:57.316 +05:30 [INF] Executed DbCommand (33ms) [Parameters=[@p0='?' (DbType = Guid), @p1='?' (DbType = DateTime2), @p2='?' (Size = 150), @p3='?' (Size = 100), @p4='?' (DbType = Boolean), @p5='?' (DbType = DateTime2), @p6='?' (Size = 4000), @p7='?' (Size = 15), @p8='?' (Size = 20), @p9='?' (DbType = DateTime2), @p10='?' (DbType = Guid), @p11='?' (Size = 12), @p12='?' (DbType = DateTime2), @p13='?' (Size = 100), @p14='?' (DbType = Boolean), @p15='?' (DbType = Boolean), @p16='?' (Size = 100), @p17='?' (Precision = 10) (Scale = 2) (DbType = Decimal), @p18='?' (DbType = DateTime2), @p19='?' (DbType = Guid), @p20='?' (Size = 100), @p21='?' (DbType = Guid), @p22='?' (DbType = DateTime2), @p23='?' (DbType = DateTime2), @p24='?' (DbType = Boolean), @p25='?' (Size = 200), @p26='?' (Size = 256), @p27='?' (DbType = DateTime2), @p28='?' (Size = 256), @p29='?' (DbType = DateTime2), @p30='?' (DbType = Guid)], CommandType='"Text"', CommandTimeout='30']
+SET NOCOUNT ON;
+INSERT INTO [Users] ([Id], [CreatedAtUtc], [Email], [FullName], [IsDeleted], [LastLoginAtUtc], [PasswordHash], [PhoneNumber], [Role], [UpdatedAtUtc])
+OUTPUT INSERTED.[EmailVerified], INSERTED.[IsActive]
+VALUES (@p0, @p1, @p2, @p3, @p4, @p5, @p6, @p7, @p8, @p9);
+INSERT INTO [FarmerProfiles] ([Id], [AadhaarNumber], [CreatedAtUtc], [District], [IsDeleted], [IsKycVerified], [State], [TotalLandAcres], [UpdatedAtUtc], [UserId], [Village])
+VALUES (@p10, @p11, @p12, @p13, @p14, @p15, @p16, @p17, @p18, @p19, @p20);
+INSERT INTO [RefreshTokens] ([Id], [CreatedAtUtc], [ExpiresAtUtc], [IsDeleted], [ReasonRevoked], [ReplacedByToken], [RevokedAtUtc], [Token], [UpdatedAtUtc], [UserId])
+OUTPUT INSERTED.[IsRevoked]
+VALUES (@p21, @p22, @p23, @p24, @p25, @p26, @p27, @p28, @p29, @p30);
+2026-05-22 19:47:57.340 +05:30 [ERR] An exception occurred in the database while saving changes for context type 'Authentication.Data.AppDbContext'.
+Microsoft.EntityFrameworkCore.DbUpdateException: An error occurred while saving the entity changes. See the inner exception for details.
+ ---> Microsoft.Data.SqlClient.SqlException (0x80131904): Cannot insert duplicate key row in object 'dbo.FarmerProfiles' with unique index 'IX_FarmerProfiles_AadhaarNumber'. The duplicate key value is (123456789012).
+   at Microsoft.Data.SqlClient.SqlConnection.OnError(SqlException exception, Boolean breakConnection, Action`1 wrapCloseInAction)
+   at Microsoft.Data.SqlClient.SqlInternalConnection.OnError(SqlException exception, Boolean breakConnection, Action`1 wrapCloseInAction)
+   at Microsoft.Data.SqlClient.TdsParser.ThrowExceptionAndWarning(TdsParserStateObject stateObj, SqlCommand command, Boolean callerHasConnectionLock, Boolean asyncClose)
+   at Microsoft.Data.SqlClient.TdsParser.TryRun(RunBehavior runBehavior, SqlCommand cmdHandler, SqlDataReader dataStream, BulkCopySimpleResultSet bulkCopyHandler, TdsParserStateObject stateObj, Boolean& dataReady)
+   at Microsoft.Data.SqlClient.SqlDataReader.TryHasMoreRows(Boolean& moreRows)
+   at Microsoft.Data.SqlClient.SqlDataReader.TryHasMoreResults(Boolean& moreResults)
+   at Microsoft.Data.SqlClient.SqlDataReader.TryNextResult(Boolean& more)
+   at Microsoft.Data.SqlClient.SqlDataReader.NextResultAsyncExecute(Task task, Object state)
+   at Microsoft.Data.SqlClient.SqlDataReader.InvokeAsyncCall[T](SqlDataReaderBaseAsyncCallContext`1 context)
+--- End of stack trace from previous location ---
+   at Microsoft.EntityFrameworkCore.Update.AffectedCountModificationCommandBatch.ConsumeAsync(RelationalDataReader reader, CancellationToken cancellationToken)
+ClientConnectionId:6c5cfe39-7cd4-4699-8889-04c1c03ca70f
+Error Number:2601,State:1,Class:14
+   --- End of inner exception stack trace ---
+   at Microsoft.EntityFrameworkCore.Update.AffectedCountModificationCommandBatch.ConsumeAsync(RelationalDataReader reader, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Update.ReaderModificationCommandBatch.ExecuteAsync(IRelationalConnection connection, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Update.ReaderModificationCommandBatch.ExecuteAsync(IRelationalConnection connection, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.SqlServer.Update.Internal.SqlServerModificationCommandBatch.ExecuteAsync(IRelationalConnection connection, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Update.Internal.BatchExecutor.ExecuteAsync(IEnumerable`1 commandBatches, IRelationalConnection connection, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Update.Internal.BatchExecutor.ExecuteAsync(IEnumerable`1 commandBatches, IRelationalConnection connection, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Update.Internal.BatchExecutor.ExecuteAsync(IEnumerable`1 commandBatches, IRelationalConnection connection, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalDatabase.SaveChangesAsync(IList`1 entries, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.ChangeTracking.Internal.StateManager.SaveChangesAsync(IList`1 entriesToSave, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.ChangeTracking.Internal.StateManager.SaveChangesAsync(StateManager stateManager, Boolean acceptAllChangesOnSuccess, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.SqlServer.Storage.Internal.SqlServerExecutionStrategy.ExecuteAsync[TState,TResult](TState state, Func`4 operation, Func`4 verifySucceeded, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.DbContext.SaveChangesAsync(Boolean acceptAllChangesOnSuccess, CancellationToken cancellationToken)
+Microsoft.EntityFrameworkCore.DbUpdateException: An error occurred while saving the entity changes. See the inner exception for details.
+ ---> Microsoft.Data.SqlClient.SqlException (0x80131904): Cannot insert duplicate key row in object 'dbo.FarmerProfiles' with unique index 'IX_FarmerProfiles_AadhaarNumber'. The duplicate key value is (123456789012).
+   at Microsoft.Data.SqlClient.SqlConnection.OnError(SqlException exception, Boolean breakConnection, Action`1 wrapCloseInAction)
+   at Microsoft.Data.SqlClient.SqlInternalConnection.OnError(SqlException exception, Boolean breakConnection, Action`1 wrapCloseInAction)
+   at Microsoft.Data.SqlClient.TdsParser.ThrowExceptionAndWarning(TdsParserStateObject stateObj, SqlCommand command, Boolean callerHasConnectionLock, Boolean asyncClose)
+   at Microsoft.Data.SqlClient.TdsParser.TryRun(RunBehavior runBehavior, SqlCommand cmdHandler, SqlDataReader dataStream, BulkCopySimpleResultSet bulkCopyHandler, TdsParserStateObject stateObj, Boolean& dataReady)
+   at Microsoft.Data.SqlClient.SqlDataReader.TryHasMoreRows(Boolean& moreRows)
+   at Microsoft.Data.SqlClient.SqlDataReader.TryHasMoreResults(Boolean& moreResults)
+   at Microsoft.Data.SqlClient.SqlDataReader.TryNextResult(Boolean& more)
+   at Microsoft.Data.SqlClient.SqlDataReader.NextResultAsyncExecute(Task task, Object state)
+   at Microsoft.Data.SqlClient.SqlDataReader.InvokeAsyncCall[T](SqlDataReaderBaseAsyncCallContext`1 context)
+--- End of stack trace from previous location ---
+   at Microsoft.EntityFrameworkCore.Update.AffectedCountModificationCommandBatch.ConsumeAsync(RelationalDataReader reader, CancellationToken cancellationToken)
+ClientConnectionId:6c5cfe39-7cd4-4699-8889-04c1c03ca70f
+Error Number:2601,State:1,Class:14
+   --- End of inner exception stack trace ---
+   at Microsoft.EntityFrameworkCore.Update.AffectedCountModificationCommandBatch.ConsumeAsync(RelationalDataReader reader, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Update.ReaderModificationCommandBatch.ExecuteAsync(IRelationalConnection connection, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Update.ReaderModificationCommandBatch.ExecuteAsync(IRelationalConnection connection, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.SqlServer.Update.Internal.SqlServerModificationCommandBatch.ExecuteAsync(IRelationalConnection connection, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Update.Internal.BatchExecutor.ExecuteAsync(IEnumerable`1 commandBatches, IRelationalConnection connection, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Update.Internal.BatchExecutor.ExecuteAsync(IEnumerable`1 commandBatches, IRelationalConnection connection, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Update.Internal.BatchExecutor.ExecuteAsync(IEnumerable`1 commandBatches, IRelationalConnection connection, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalDatabase.SaveChangesAsync(IList`1 entries, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.ChangeTracking.Internal.StateManager.SaveChangesAsync(IList`1 entriesToSave, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.ChangeTracking.Internal.StateManager.SaveChangesAsync(StateManager stateManager, Boolean acceptAllChangesOnSuccess, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.SqlServer.Storage.Internal.SqlServerExecutionStrategy.ExecuteAsync[TState,TResult](TState state, Func`4 operation, Func`4 verifySucceeded, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.DbContext.SaveChangesAsync(Boolean acceptAllChangesOnSuccess, CancellationToken cancellationToken)
+2026-05-22 19:47:57.356 +05:30 [ERR] Unhandled exception on POST /api/auth/register
+Microsoft.EntityFrameworkCore.DbUpdateException: An error occurred while saving the entity changes. See the inner exception for details.
+ ---> Microsoft.Data.SqlClient.SqlException (0x80131904): Cannot insert duplicate key row in object 'dbo.FarmerProfiles' with unique index 'IX_FarmerProfiles_AadhaarNumber'. The duplicate key value is (123456789012).
+   at Microsoft.Data.SqlClient.SqlConnection.OnError(SqlException exception, Boolean breakConnection, Action`1 wrapCloseInAction)
+   at Microsoft.Data.SqlClient.SqlInternalConnection.OnError(SqlException exception, Boolean breakConnection, Action`1 wrapCloseInAction)
+   at Microsoft.Data.SqlClient.TdsParser.ThrowExceptionAndWarning(TdsParserStateObject stateObj, SqlCommand command, Boolean callerHasConnectionLock, Boolean asyncClose)
+   at Microsoft.Data.SqlClient.TdsParser.TryRun(RunBehavior runBehavior, SqlCommand cmdHandler, SqlDataReader dataStream, BulkCopySimpleResultSet bulkCopyHandler, TdsParserStateObject stateObj, Boolean& dataReady)
+   at Microsoft.Data.SqlClient.SqlDataReader.TryHasMoreRows(Boolean& moreRows)
+   at Microsoft.Data.SqlClient.SqlDataReader.TryHasMoreResults(Boolean& moreResults)
+   at Microsoft.Data.SqlClient.SqlDataReader.TryNextResult(Boolean& more)
+   at Microsoft.Data.SqlClient.SqlDataReader.NextResultAsyncExecute(Task task, Object state)
+   at Microsoft.Data.SqlClient.SqlDataReader.InvokeAsyncCall[T](SqlDataReaderBaseAsyncCallContext`1 context)
+--- End of stack trace from previous location ---
+   at Microsoft.EntityFrameworkCore.Update.AffectedCountModificationCommandBatch.ConsumeAsync(RelationalDataReader reader, CancellationToken cancellationToken)
+ClientConnectionId:6c5cfe39-7cd4-4699-8889-04c1c03ca70f
+Error Number:2601,State:1,Class:14
+   --- End of inner exception stack trace ---
+   at Microsoft.EntityFrameworkCore.Update.AffectedCountModificationCommandBatch.ConsumeAsync(RelationalDataReader reader, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Update.ReaderModificationCommandBatch.ExecuteAsync(IRelationalConnection connection, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Update.ReaderModificationCommandBatch.ExecuteAsync(IRelationalConnection connection, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.SqlServer.Update.Internal.SqlServerModificationCommandBatch.ExecuteAsync(IRelationalConnection connection, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Update.Internal.BatchExecutor.ExecuteAsync(IEnumerable`1 commandBatches, IRelationalConnection connection, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Update.Internal.BatchExecutor.ExecuteAsync(IEnumerable`1 commandBatches, IRelationalConnection connection, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Update.Internal.BatchExecutor.ExecuteAsync(IEnumerable`1 commandBatches, IRelationalConnection connection, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalDatabase.SaveChangesAsync(IList`1 entries, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.ChangeTracking.Internal.StateManager.SaveChangesAsync(IList`1 entriesToSave, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.ChangeTracking.Internal.StateManager.SaveChangesAsync(StateManager stateManager, Boolean acceptAllChangesOnSuccess, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.SqlServer.Storage.Internal.SqlServerExecutionStrategy.ExecuteAsync[TState,TResult](TState state, Func`4 operation, Func`4 verifySucceeded, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.DbContext.SaveChangesAsync(Boolean acceptAllChangesOnSuccess, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.DbContext.SaveChangesAsync(Boolean acceptAllChangesOnSuccess, CancellationToken cancellationToken)
+   at Authentication.Data.AppDbContext.SaveChangesAsync(CancellationToken cancellationToken) in E:\.Net\Projects\Crop-Insurance-Farmer-Risk-Intelligence-Platform\Crop-Insurance\Backend-Crop-Insurrance\Backend-Crop-Insurrance\Data\AppDbContext.cs:line 58
+   at Authentication.Services.BaseRepository`1.SaveChangesAsync() in E:\.Net\Projects\Crop-Insurance-Farmer-Risk-Intelligence-Platform\Crop-Insurance\Backend-Crop-Insurrance\Backend-Crop-Insurrance\Services\BaseRepository.cs:line 93
+   at Authentication.Services.AuthService.RegisterAsync(RegisterRequestDto request) in E:\.Net\Projects\Crop-Insurance-Farmer-Risk-Intelligence-Platform\Crop-Insurance\Backend-Crop-Insurrance\Backend-Crop-Insurrance\Services\AuthService.cs:line 102
+   at Authentication.Controllers.AuthController.Register(RegisterRequestDto request) in E:\.Net\Projects\Crop-Insurance-Farmer-Risk-Intelligence-Platform\Crop-Insurance\Backend-Crop-Insurrance\Backend-Crop-Insurrance\Controllers\AuthController.cs:line 34
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ActionMethodExecutor.TaskOfIActionResultExecutor.Execute(ActionContext actionContext, IActionResultTypeMapper mapper, ObjectMethodExecutor executor, Object controller, Object[] arguments)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.<InvokeActionMethodAsync>g__Awaited|12_0(ControllerActionInvoker invoker, ValueTask`1 actionResultValueTask)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.<InvokeNextActionFilterAsync>g__Awaited|10_0(ControllerActionInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.Rethrow(ActionExecutedContextSealed context)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.Next(State& next, Scope& scope, Object& state, Boolean& isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.<InvokeInnerFilterAsync>g__Awaited|13_0(ControllerActionInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeFilterPipelineAsync>g__Awaited|20_0(ResourceInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Awaited|17_0(ResourceInvoker invoker, Task task, IDisposable scope)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Awaited|17_0(ResourceInvoker invoker, Task task, IDisposable scope)
+   at Microsoft.AspNetCore.Authorization.AuthorizationMiddleware.Invoke(HttpContext context)
+   at Microsoft.AspNetCore.Authentication.AuthenticationMiddleware.Invoke(HttpContext context)
+   at Microsoft.AspNetCore.RateLimiting.RateLimitingMiddleware.InvokeInternal(HttpContext context, EnableRateLimitingAttribute enableRateLimitingAttribute)
+   at Authentication.Middleware.RequestLoggingMiddleware.InvokeAsync(HttpContext context) in E:\.Net\Projects\Crop-Insurance-Farmer-Risk-Intelligence-Platform\Crop-Insurance\Backend-Crop-Insurrance\Backend-Crop-Insurrance\Middleware\RequestLoggingMiddleware.cs:line 24
+   at Authentication.Middleware.SecurityHeadersMiddleware.InvokeAsync(HttpContext context) in E:\.Net\Projects\Crop-Insurance-Farmer-Risk-Intelligence-Platform\Crop-Insurance\Backend-Crop-Insurrance\Backend-Crop-Insurrance\Middleware\SecurityHeadersMiddleware.cs:line 48
+   at Authentication.Middleware.GlobalExceptionMiddleware.InvokeAsync(HttpContext context) in E:\.Net\Projects\Crop-Insurance-Farmer-Risk-Intelligence-Platform\Crop-Insurance\Backend-Crop-Insurrance\Backend-Crop-Insurrance\Middleware\GlobalExceptionMiddleware.cs:line 24
+2026-05-22 21:23:58.692 +05:30 [INF] Executed DbCommand (113ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT 1
+2026-05-22 21:23:58.833 +05:30 [INF] Acquiring an exclusive lock for migration application. See https://aka.ms/efcore-docs-migrations-lock for more information if this takes too long.
+2026-05-22 21:23:58.926 +05:30 [INF] Executed DbCommand (79ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+DECLARE @result int;
+EXEC @result = sp_getapplock @Resource = '__EFMigrationsLock', @LockOwner = 'Session', @LockMode = 'Exclusive';
+SELECT @result
+2026-05-22 21:23:59.077 +05:30 [INF] Executed DbCommand (4ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+IF OBJECT_ID(N'[__EFMigrationsHistory]') IS NULL
+BEGIN
+    CREATE TABLE [__EFMigrationsHistory] (
+        [MigrationId] nvarchar(150) NOT NULL,
+        [ProductVersion] nvarchar(32) NOT NULL,
+        CONSTRAINT [PK___EFMigrationsHistory] PRIMARY KEY ([MigrationId])
+    );
+END;
+2026-05-22 21:23:59.128 +05:30 [INF] Executed DbCommand (1ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT 1
+2026-05-22 21:23:59.138 +05:30 [INF] Executed DbCommand (2ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT OBJECT_ID(N'[__EFMigrationsHistory]');
+2026-05-22 21:23:59.164 +05:30 [INF] Executed DbCommand (11ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT [MigrationId], [ProductVersion]
+FROM [__EFMigrationsHistory]
+ORDER BY [MigrationId];
+2026-05-22 21:23:59.194 +05:30 [INF] No migrations were applied. The database is already up to date.
+2026-05-22 21:23:59.210 +05:30 [INF] Executed DbCommand (10ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+DECLARE @result int;
+EXEC @result = sp_releaseapplock @Resource = '__EFMigrationsLock', @LockOwner = 'Session';
+SELECT @result
+2026-05-22 21:24:00.071 +05:30 [INF] Executed DbCommand (13ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT CASE
+    WHEN EXISTS (
+        SELECT 1
+        FROM [Users] AS [u]
+        WHERE [u].[IsDeleted] = CAST(0 AS bit) AND [u].[Role] = N'Admin') THEN CAST(1 AS bit)
+    ELSE CAST(0 AS bit)
+END
+2026-05-22 21:24:00.098 +05:30 [INF] Admin account already exists. Skipping.
+2026-05-22 21:24:00.125 +05:30 [INF] Executed DbCommand (10ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT CASE
+    WHEN EXISTS (
+        SELECT 1
+        FROM [Users] AS [u]
+        WHERE [u].[IsDeleted] = CAST(0 AS bit) AND [u].[Role] = N'InsuranceAgent') THEN CAST(1 AS bit)
+    ELSE CAST(0 AS bit)
+END
+2026-05-22 21:24:00.133 +05:30 [INF] Agent account already exists. Skipping.
+2026-05-22 21:24:00.136 +05:30 [INF] Database seeding completed.
+2026-05-22 21:24:14.261 +05:30 [WRN] Failed to determine the https port for redirect.
+2026-05-22 21:24:22.106 +05:30 [INF] Executed DbCommand (224ms) [Parameters=[@Trim='?' (Size = 150)], CommandType='"Text"', CommandTimeout='30']
+SELECT CASE
+    WHEN EXISTS (
+        SELECT 1
+        FROM [Users] AS [u]
+        WHERE [u].[IsDeleted] = CAST(0 AS bit) AND [u].[Email] = @Trim) THEN CAST(1 AS bit)
+    ELSE CAST(0 AS bit)
+END
+2026-05-22 21:24:26.023 +05:30 [INF] Executed DbCommand (56ms) [Parameters=[@p0='?' (DbType = Guid), @p1='?' (DbType = DateTime2), @p2='?' (Size = 150), @p3='?' (Size = 100), @p4='?' (DbType = Boolean), @p5='?' (DbType = DateTime2), @p6='?' (Size = 4000), @p7='?' (Size = 15), @p8='?' (Size = 20), @p9='?' (DbType = DateTime2), @p10='?' (DbType = Guid), @p11='?' (Size = 12), @p12='?' (DbType = DateTime2), @p13='?' (Size = 100), @p14='?' (DbType = Boolean), @p15='?' (DbType = Boolean), @p16='?' (Size = 100), @p17='?' (Precision = 10) (Scale = 2) (DbType = Decimal), @p18='?' (DbType = DateTime2), @p19='?' (DbType = Guid), @p20='?' (Size = 100), @p21='?' (DbType = Guid), @p22='?' (DbType = DateTime2), @p23='?' (DbType = DateTime2), @p24='?' (DbType = Boolean), @p25='?' (Size = 200), @p26='?' (Size = 256), @p27='?' (DbType = DateTime2), @p28='?' (Size = 256), @p29='?' (DbType = DateTime2), @p30='?' (DbType = Guid)], CommandType='"Text"', CommandTimeout='30']
+SET NOCOUNT ON;
+INSERT INTO [Users] ([Id], [CreatedAtUtc], [Email], [FullName], [IsDeleted], [LastLoginAtUtc], [PasswordHash], [PhoneNumber], [Role], [UpdatedAtUtc])
+OUTPUT INSERTED.[EmailVerified], INSERTED.[IsActive]
+VALUES (@p0, @p1, @p2, @p3, @p4, @p5, @p6, @p7, @p8, @p9);
+INSERT INTO [FarmerProfiles] ([Id], [AadhaarNumber], [CreatedAtUtc], [District], [IsDeleted], [IsKycVerified], [State], [TotalLandAcres], [UpdatedAtUtc], [UserId], [Village])
+VALUES (@p10, @p11, @p12, @p13, @p14, @p15, @p16, @p17, @p18, @p19, @p20);
+INSERT INTO [RefreshTokens] ([Id], [CreatedAtUtc], [ExpiresAtUtc], [IsDeleted], [ReasonRevoked], [ReplacedByToken], [RevokedAtUtc], [Token], [UpdatedAtUtc], [UserId])
+OUTPUT INSERTED.[IsRevoked]
+VALUES (@p21, @p22, @p23, @p24, @p25, @p26, @p27, @p28, @p29, @p30);
+2026-05-22 21:24:26.162 +05:30 [ERR] An exception occurred in the database while saving changes for context type 'Authentication.Data.AppDbContext'.
+Microsoft.EntityFrameworkCore.DbUpdateException: An error occurred while saving the entity changes. See the inner exception for details.
+ ---> Microsoft.Data.SqlClient.SqlException (0x80131904): Cannot insert duplicate key row in object 'dbo.FarmerProfiles' with unique index 'IX_FarmerProfiles_AadhaarNumber'. The duplicate key value is (123456789012).
+   at Microsoft.Data.SqlClient.SqlConnection.OnError(SqlException exception, Boolean breakConnection, Action`1 wrapCloseInAction)
+   at Microsoft.Data.SqlClient.SqlInternalConnection.OnError(SqlException exception, Boolean breakConnection, Action`1 wrapCloseInAction)
+   at Microsoft.Data.SqlClient.TdsParser.ThrowExceptionAndWarning(TdsParserStateObject stateObj, SqlCommand command, Boolean callerHasConnectionLock, Boolean asyncClose)
+   at Microsoft.Data.SqlClient.TdsParser.TryRun(RunBehavior runBehavior, SqlCommand cmdHandler, SqlDataReader dataStream, BulkCopySimpleResultSet bulkCopyHandler, TdsParserStateObject stateObj, Boolean& dataReady)
+   at Microsoft.Data.SqlClient.SqlDataReader.TryHasMoreRows(Boolean& moreRows)
+   at Microsoft.Data.SqlClient.SqlDataReader.TryHasMoreResults(Boolean& moreResults)
+   at Microsoft.Data.SqlClient.SqlDataReader.TryNextResult(Boolean& more)
+   at Microsoft.Data.SqlClient.SqlDataReader.NextResultAsyncExecute(Task task, Object state)
+   at Microsoft.Data.SqlClient.SqlDataReader.InvokeAsyncCall[T](SqlDataReaderBaseAsyncCallContext`1 context)
+--- End of stack trace from previous location ---
+   at Microsoft.EntityFrameworkCore.Update.AffectedCountModificationCommandBatch.ConsumeAsync(RelationalDataReader reader, CancellationToken cancellationToken)
+ClientConnectionId:a35e1ad6-de80-4964-aaa2-64c84a1cedc5
+Error Number:2601,State:1,Class:14
+   --- End of inner exception stack trace ---
+   at Microsoft.EntityFrameworkCore.Update.AffectedCountModificationCommandBatch.ConsumeAsync(RelationalDataReader reader, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Update.ReaderModificationCommandBatch.ExecuteAsync(IRelationalConnection connection, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Update.ReaderModificationCommandBatch.ExecuteAsync(IRelationalConnection connection, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.SqlServer.Update.Internal.SqlServerModificationCommandBatch.ExecuteAsync(IRelationalConnection connection, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Update.Internal.BatchExecutor.ExecuteAsync(IEnumerable`1 commandBatches, IRelationalConnection connection, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Update.Internal.BatchExecutor.ExecuteAsync(IEnumerable`1 commandBatches, IRelationalConnection connection, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Update.Internal.BatchExecutor.ExecuteAsync(IEnumerable`1 commandBatches, IRelationalConnection connection, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalDatabase.SaveChangesAsync(IList`1 entries, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.ChangeTracking.Internal.StateManager.SaveChangesAsync(IList`1 entriesToSave, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.ChangeTracking.Internal.StateManager.SaveChangesAsync(StateManager stateManager, Boolean acceptAllChangesOnSuccess, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.SqlServer.Storage.Internal.SqlServerExecutionStrategy.ExecuteAsync[TState,TResult](TState state, Func`4 operation, Func`4 verifySucceeded, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.DbContext.SaveChangesAsync(Boolean acceptAllChangesOnSuccess, CancellationToken cancellationToken)
+Microsoft.EntityFrameworkCore.DbUpdateException: An error occurred while saving the entity changes. See the inner exception for details.
+ ---> Microsoft.Data.SqlClient.SqlException (0x80131904): Cannot insert duplicate key row in object 'dbo.FarmerProfiles' with unique index 'IX_FarmerProfiles_AadhaarNumber'. The duplicate key value is (123456789012).
+   at Microsoft.Data.SqlClient.SqlConnection.OnError(SqlException exception, Boolean breakConnection, Action`1 wrapCloseInAction)
+   at Microsoft.Data.SqlClient.SqlInternalConnection.OnError(SqlException exception, Boolean breakConnection, Action`1 wrapCloseInAction)
+   at Microsoft.Data.SqlClient.TdsParser.ThrowExceptionAndWarning(TdsParserStateObject stateObj, SqlCommand command, Boolean callerHasConnectionLock, Boolean asyncClose)
+   at Microsoft.Data.SqlClient.TdsParser.TryRun(RunBehavior runBehavior, SqlCommand cmdHandler, SqlDataReader dataStream, BulkCopySimpleResultSet bulkCopyHandler, TdsParserStateObject stateObj, Boolean& dataReady)
+   at Microsoft.Data.SqlClient.SqlDataReader.TryHasMoreRows(Boolean& moreRows)
+   at Microsoft.Data.SqlClient.SqlDataReader.TryHasMoreResults(Boolean& moreResults)
+   at Microsoft.Data.SqlClient.SqlDataReader.TryNextResult(Boolean& more)
+   at Microsoft.Data.SqlClient.SqlDataReader.NextResultAsyncExecute(Task task, Object state)
+   at Microsoft.Data.SqlClient.SqlDataReader.InvokeAsyncCall[T](SqlDataReaderBaseAsyncCallContext`1 context)
+--- End of stack trace from previous location ---
+   at Microsoft.EntityFrameworkCore.Update.AffectedCountModificationCommandBatch.ConsumeAsync(RelationalDataReader reader, CancellationToken cancellationToken)
+ClientConnectionId:a35e1ad6-de80-4964-aaa2-64c84a1cedc5
+Error Number:2601,State:1,Class:14
+   --- End of inner exception stack trace ---
+   at Microsoft.EntityFrameworkCore.Update.AffectedCountModificationCommandBatch.ConsumeAsync(RelationalDataReader reader, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Update.ReaderModificationCommandBatch.ExecuteAsync(IRelationalConnection connection, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Update.ReaderModificationCommandBatch.ExecuteAsync(IRelationalConnection connection, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.SqlServer.Update.Internal.SqlServerModificationCommandBatch.ExecuteAsync(IRelationalConnection connection, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Update.Internal.BatchExecutor.ExecuteAsync(IEnumerable`1 commandBatches, IRelationalConnection connection, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Update.Internal.BatchExecutor.ExecuteAsync(IEnumerable`1 commandBatches, IRelationalConnection connection, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Update.Internal.BatchExecutor.ExecuteAsync(IEnumerable`1 commandBatches, IRelationalConnection connection, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalDatabase.SaveChangesAsync(IList`1 entries, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.ChangeTracking.Internal.StateManager.SaveChangesAsync(IList`1 entriesToSave, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.ChangeTracking.Internal.StateManager.SaveChangesAsync(StateManager stateManager, Boolean acceptAllChangesOnSuccess, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.SqlServer.Storage.Internal.SqlServerExecutionStrategy.ExecuteAsync[TState,TResult](TState state, Func`4 operation, Func`4 verifySucceeded, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.DbContext.SaveChangesAsync(Boolean acceptAllChangesOnSuccess, CancellationToken cancellationToken)
+2026-05-22 21:24:26.221 +05:30 [ERR] Unhandled exception on POST /api/auth/register
+Microsoft.EntityFrameworkCore.DbUpdateException: An error occurred while saving the entity changes. See the inner exception for details.
+ ---> Microsoft.Data.SqlClient.SqlException (0x80131904): Cannot insert duplicate key row in object 'dbo.FarmerProfiles' with unique index 'IX_FarmerProfiles_AadhaarNumber'. The duplicate key value is (123456789012).
+   at Microsoft.Data.SqlClient.SqlConnection.OnError(SqlException exception, Boolean breakConnection, Action`1 wrapCloseInAction)
+   at Microsoft.Data.SqlClient.SqlInternalConnection.OnError(SqlException exception, Boolean breakConnection, Action`1 wrapCloseInAction)
+   at Microsoft.Data.SqlClient.TdsParser.ThrowExceptionAndWarning(TdsParserStateObject stateObj, SqlCommand command, Boolean callerHasConnectionLock, Boolean asyncClose)
+   at Microsoft.Data.SqlClient.TdsParser.TryRun(RunBehavior runBehavior, SqlCommand cmdHandler, SqlDataReader dataStream, BulkCopySimpleResultSet bulkCopyHandler, TdsParserStateObject stateObj, Boolean& dataReady)
+   at Microsoft.Data.SqlClient.SqlDataReader.TryHasMoreRows(Boolean& moreRows)
+   at Microsoft.Data.SqlClient.SqlDataReader.TryHasMoreResults(Boolean& moreResults)
+   at Microsoft.Data.SqlClient.SqlDataReader.TryNextResult(Boolean& more)
+   at Microsoft.Data.SqlClient.SqlDataReader.NextResultAsyncExecute(Task task, Object state)
+   at Microsoft.Data.SqlClient.SqlDataReader.InvokeAsyncCall[T](SqlDataReaderBaseAsyncCallContext`1 context)
+--- End of stack trace from previous location ---
+   at Microsoft.EntityFrameworkCore.Update.AffectedCountModificationCommandBatch.ConsumeAsync(RelationalDataReader reader, CancellationToken cancellationToken)
+ClientConnectionId:a35e1ad6-de80-4964-aaa2-64c84a1cedc5
+Error Number:2601,State:1,Class:14
+   --- End of inner exception stack trace ---
+   at Microsoft.EntityFrameworkCore.Update.AffectedCountModificationCommandBatch.ConsumeAsync(RelationalDataReader reader, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Update.ReaderModificationCommandBatch.ExecuteAsync(IRelationalConnection connection, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Update.ReaderModificationCommandBatch.ExecuteAsync(IRelationalConnection connection, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.SqlServer.Update.Internal.SqlServerModificationCommandBatch.ExecuteAsync(IRelationalConnection connection, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Update.Internal.BatchExecutor.ExecuteAsync(IEnumerable`1 commandBatches, IRelationalConnection connection, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Update.Internal.BatchExecutor.ExecuteAsync(IEnumerable`1 commandBatches, IRelationalConnection connection, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Update.Internal.BatchExecutor.ExecuteAsync(IEnumerable`1 commandBatches, IRelationalConnection connection, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalDatabase.SaveChangesAsync(IList`1 entries, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.ChangeTracking.Internal.StateManager.SaveChangesAsync(IList`1 entriesToSave, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.ChangeTracking.Internal.StateManager.SaveChangesAsync(StateManager stateManager, Boolean acceptAllChangesOnSuccess, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.SqlServer.Storage.Internal.SqlServerExecutionStrategy.ExecuteAsync[TState,TResult](TState state, Func`4 operation, Func`4 verifySucceeded, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.DbContext.SaveChangesAsync(Boolean acceptAllChangesOnSuccess, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.DbContext.SaveChangesAsync(Boolean acceptAllChangesOnSuccess, CancellationToken cancellationToken)
+   at Authentication.Data.AppDbContext.SaveChangesAsync(CancellationToken cancellationToken) in E:\.Net\Projects\Crop-Insurance-Farmer-Risk-Intelligence-Platform\Crop-Insurance\Backend-Crop-Insurrance\Backend-Crop-Insurrance\Data\AppDbContext.cs:line 58
+   at Authentication.Services.BaseRepository`1.SaveChangesAsync() in E:\.Net\Projects\Crop-Insurance-Farmer-Risk-Intelligence-Platform\Crop-Insurance\Backend-Crop-Insurrance\Backend-Crop-Insurrance\Services\BaseRepository.cs:line 93
+   at Authentication.Services.AuthService.RegisterAsync(RegisterRequestDto request) in E:\.Net\Projects\Crop-Insurance-Farmer-Risk-Intelligence-Platform\Crop-Insurance\Backend-Crop-Insurrance\Backend-Crop-Insurrance\Services\AuthService.cs:line 102
+   at Authentication.Controllers.AuthController.Register(RegisterRequestDto request) in E:\.Net\Projects\Crop-Insurance-Farmer-Risk-Intelligence-Platform\Crop-Insurance\Backend-Crop-Insurrance\Backend-Crop-Insurrance\Controllers\AuthController.cs:line 34
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ActionMethodExecutor.TaskOfIActionResultExecutor.Execute(ActionContext actionContext, IActionResultTypeMapper mapper, ObjectMethodExecutor executor, Object controller, Object[] arguments)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.<InvokeActionMethodAsync>g__Awaited|12_0(ControllerActionInvoker invoker, ValueTask`1 actionResultValueTask)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.<InvokeNextActionFilterAsync>g__Awaited|10_0(ControllerActionInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.Rethrow(ActionExecutedContextSealed context)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.Next(State& next, Scope& scope, Object& state, Boolean& isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.<InvokeInnerFilterAsync>g__Awaited|13_0(ControllerActionInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeFilterPipelineAsync>g__Awaited|20_0(ResourceInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Awaited|17_0(ResourceInvoker invoker, Task task, IDisposable scope)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Awaited|17_0(ResourceInvoker invoker, Task task, IDisposable scope)
+   at Microsoft.AspNetCore.Authorization.AuthorizationMiddleware.Invoke(HttpContext context)
+   at Microsoft.AspNetCore.Authentication.AuthenticationMiddleware.Invoke(HttpContext context)
+   at Microsoft.AspNetCore.RateLimiting.RateLimitingMiddleware.InvokeInternal(HttpContext context, EnableRateLimitingAttribute enableRateLimitingAttribute)
+   at Authentication.Middleware.RequestLoggingMiddleware.InvokeAsync(HttpContext context) in E:\.Net\Projects\Crop-Insurance-Farmer-Risk-Intelligence-Platform\Crop-Insurance\Backend-Crop-Insurrance\Backend-Crop-Insurrance\Middleware\RequestLoggingMiddleware.cs:line 24
+   at Authentication.Middleware.SecurityHeadersMiddleware.InvokeAsync(HttpContext context) in E:\.Net\Projects\Crop-Insurance-Farmer-Risk-Intelligence-Platform\Crop-Insurance\Backend-Crop-Insurrance\Backend-Crop-Insurrance\Middleware\SecurityHeadersMiddleware.cs:line 48
+   at Authentication.Middleware.GlobalExceptionMiddleware.InvokeAsync(HttpContext context) in E:\.Net\Projects\Crop-Insurance-Farmer-Risk-Intelligence-Platform\Crop-Insurance\Backend-Crop-Insurrance\Backend-Crop-Insurrance\Middleware\GlobalExceptionMiddleware.cs:line 24
+2026-05-22 21:26:22.021 +05:30 [INF] Executed DbCommand (52ms) [Parameters=[@Trim='?' (Size = 150)], CommandType='"Text"', CommandTimeout='30']
+SELECT CASE
+    WHEN EXISTS (
+        SELECT 1
+        FROM [Users] AS [u]
+        WHERE [u].[IsDeleted] = CAST(0 AS bit) AND [u].[Email] = @Trim) THEN CAST(1 AS bit)
+    ELSE CAST(0 AS bit)
+END
+2026-05-22 21:26:23.307 +05:30 [INF] Executed DbCommand (85ms) [Parameters=[@p0='?' (DbType = Guid), @p1='?' (DbType = DateTime2), @p2='?' (Size = 150), @p3='?' (Size = 100), @p4='?' (DbType = Boolean), @p5='?' (DbType = DateTime2), @p6='?' (Size = 4000), @p7='?' (Size = 15), @p8='?' (Size = 20), @p9='?' (DbType = DateTime2), @p10='?' (DbType = Guid), @p11='?' (Size = 12), @p12='?' (DbType = DateTime2), @p13='?' (Size = 100), @p14='?' (DbType = Boolean), @p15='?' (DbType = Boolean), @p16='?' (Size = 100), @p17='?' (Precision = 10) (Scale = 2) (DbType = Decimal), @p18='?' (DbType = DateTime2), @p19='?' (DbType = Guid), @p20='?' (Size = 100), @p21='?' (DbType = Guid), @p22='?' (DbType = DateTime2), @p23='?' (DbType = DateTime2), @p24='?' (DbType = Boolean), @p25='?' (Size = 200), @p26='?' (Size = 256), @p27='?' (DbType = DateTime2), @p28='?' (Size = 256), @p29='?' (DbType = DateTime2), @p30='?' (DbType = Guid)], CommandType='"Text"', CommandTimeout='30']
+SET NOCOUNT ON;
+INSERT INTO [Users] ([Id], [CreatedAtUtc], [Email], [FullName], [IsDeleted], [LastLoginAtUtc], [PasswordHash], [PhoneNumber], [Role], [UpdatedAtUtc])
+OUTPUT INSERTED.[EmailVerified], INSERTED.[IsActive]
+VALUES (@p0, @p1, @p2, @p3, @p4, @p5, @p6, @p7, @p8, @p9);
+INSERT INTO [FarmerProfiles] ([Id], [AadhaarNumber], [CreatedAtUtc], [District], [IsDeleted], [IsKycVerified], [State], [TotalLandAcres], [UpdatedAtUtc], [UserId], [Village])
+VALUES (@p10, @p11, @p12, @p13, @p14, @p15, @p16, @p17, @p18, @p19, @p20);
+INSERT INTO [RefreshTokens] ([Id], [CreatedAtUtc], [ExpiresAtUtc], [IsDeleted], [ReasonRevoked], [ReplacedByToken], [RevokedAtUtc], [Token], [UpdatedAtUtc], [UserId])
+OUTPUT INSERTED.[IsRevoked]
+VALUES (@p21, @p22, @p23, @p24, @p25, @p26, @p27, @p28, @p29, @p30);
+2026-05-22 21:26:23.707 +05:30 [INF] POST /api/auth/register → 200 in 1936ms
+2026-05-22 21:27:09.124 +05:30 [WRN] POST /api/auth/login → 400 in 146ms
+2026-05-22 21:28:37.795 +05:30 [WRN] POST /api/auth/login → 400 in 3ms
+2026-05-22 21:29:26.381 +05:30 [INF] Executed DbCommand (33ms) [Parameters=[@Trim='?' (Size = 150)], CommandType='"Text"', CommandTimeout='30']
+SELECT [u0].[Id], [u0].[CreatedAtUtc], [u0].[Email], [u0].[EmailVerified], [u0].[FullName], [u0].[IsActive], [u0].[IsDeleted], [u0].[LastLoginAtUtc], [u0].[PasswordHash], [u0].[PhoneNumber], [u0].[Role], [u0].[UpdatedAtUtc], [r0].[Id], [r0].[CreatedAtUtc], [r0].[ExpiresAtUtc], [r0].[IsDeleted], [r0].[IsRevoked], [r0].[ReasonRevoked], [r0].[ReplacedByToken], [r0].[RevokedAtUtc], [r0].[Token], [r0].[UpdatedAtUtc], [r0].[UserId]
+FROM (
+    SELECT TOP(1) [u].[Id], [u].[CreatedAtUtc], [u].[Email], [u].[EmailVerified], [u].[FullName], [u].[IsActive], [u].[IsDeleted], [u].[LastLoginAtUtc], [u].[PasswordHash], [u].[PhoneNumber], [u].[Role], [u].[UpdatedAtUtc]
+    FROM [Users] AS [u]
+    WHERE [u].[IsDeleted] = CAST(0 AS bit) AND [u].[Email] = @Trim
+) AS [u0]
+LEFT JOIN (
+    SELECT [r].[Id], [r].[CreatedAtUtc], [r].[ExpiresAtUtc], [r].[IsDeleted], [r].[IsRevoked], [r].[ReasonRevoked], [r].[ReplacedByToken], [r].[RevokedAtUtc], [r].[Token], [r].[UpdatedAtUtc], [r].[UserId]
+    FROM [RefreshTokens] AS [r]
+    WHERE [r].[IsDeleted] = CAST(0 AS bit)
+) AS [r0] ON [u0].[Id] = [r0].[UserId]
+ORDER BY [u0].[Id]
+2026-05-22 21:29:27.659 +05:30 [INF] Executed DbCommand (87ms) [Parameters=[@p10='?' (DbType = Guid), @p0='?' (DbType = DateTime2), @p1='?' (DbType = DateTime2), @p2='?' (DbType = Boolean), @p3='?' (DbType = Boolean), @p4='?' (Size = 200), @p5='?' (Size = 256), @p6='?' (DbType = DateTime2), @p7='?' (Size = 256), @p8='?' (DbType = DateTime2), @p9='?' (DbType = Guid), @p13='?' (DbType = Guid), @p11='?' (DbType = DateTime2), @p12='?' (DbType = DateTime2)], CommandType='"Text"', CommandTimeout='30']
+SET NOCOUNT ON;
+UPDATE [RefreshTokens] SET [CreatedAtUtc] = @p0, [ExpiresAtUtc] = @p1, [IsDeleted] = @p2, [IsRevoked] = @p3, [ReasonRevoked] = @p4, [ReplacedByToken] = @p5, [RevokedAtUtc] = @p6, [Token] = @p7, [UpdatedAtUtc] = @p8, [UserId] = @p9
+OUTPUT 1
+WHERE [Id] = @p10;
+UPDATE [Users] SET [LastLoginAtUtc] = @p11, [UpdatedAtUtc] = @p12
+OUTPUT 1
+WHERE [Id] = @p13;
+2026-05-22 21:29:27.684 +05:30 [ERR] Unhandled exception on POST /api/auth/login
+Microsoft.EntityFrameworkCore.DbUpdateConcurrencyException: The database operation was expected to affect 1 row(s), but actually affected 0 row(s); data may have been modified or deleted since entities were loaded. See https://go.microsoft.com/fwlink/?LinkId=527962 for information on understanding and handling optimistic concurrency exceptions.
+   at Microsoft.EntityFrameworkCore.Update.AffectedCountModificationCommandBatch.ThrowAggregateUpdateConcurrencyExceptionAsync(RelationalDataReader reader, Int32 commandIndex, Int32 expectedRowsAffected, Int32 rowsAffected, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Update.AffectedCountModificationCommandBatch.ConsumeResultSetWithRowsAffectedOnlyAsync(Int32 commandIndex, RelationalDataReader reader, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Update.AffectedCountModificationCommandBatch.ConsumeAsync(RelationalDataReader reader, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Update.ReaderModificationCommandBatch.ExecuteAsync(IRelationalConnection connection, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Update.ReaderModificationCommandBatch.ExecuteAsync(IRelationalConnection connection, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.SqlServer.Update.Internal.SqlServerModificationCommandBatch.ExecuteAsync(IRelationalConnection connection, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Update.Internal.BatchExecutor.ExecuteAsync(IEnumerable`1 commandBatches, IRelationalConnection connection, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Update.Internal.BatchExecutor.ExecuteAsync(IEnumerable`1 commandBatches, IRelationalConnection connection, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Update.Internal.BatchExecutor.ExecuteAsync(IEnumerable`1 commandBatches, IRelationalConnection connection, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalDatabase.SaveChangesAsync(IList`1 entries, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.ChangeTracking.Internal.StateManager.SaveChangesAsync(IList`1 entriesToSave, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.ChangeTracking.Internal.StateManager.SaveChangesAsync(StateManager stateManager, Boolean acceptAllChangesOnSuccess, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.SqlServer.Storage.Internal.SqlServerExecutionStrategy.ExecuteAsync[TState,TResult](TState state, Func`4 operation, Func`4 verifySucceeded, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.DbContext.SaveChangesAsync(Boolean acceptAllChangesOnSuccess, CancellationToken cancellationToken)
+   at Authentication.Data.AppDbContext.SaveChangesAsync(CancellationToken cancellationToken) in E:\.Net\Projects\Crop-Insurance-Farmer-Risk-Intelligence-Platform\Crop-Insurance\Backend-Crop-Insurrance\Backend-Crop-Insurrance\Data\AppDbContext.cs:line 58
+   at Authentication.Services.BaseRepository`1.SaveChangesAsync() in E:\.Net\Projects\Crop-Insurance-Farmer-Risk-Intelligence-Platform\Crop-Insurance\Backend-Crop-Insurrance\Backend-Crop-Insurrance\Services\BaseRepository.cs:line 93
+   at Authentication.Services.AuthService.LoginAsync(LoginRequestDto request) in E:\.Net\Projects\Crop-Insurance-Farmer-Risk-Intelligence-Platform\Crop-Insurance\Backend-Crop-Insurrance\Backend-Crop-Insurrance\Services\AuthService.cs:line 153
+   at Authentication.Controllers.AuthController.Login(LoginRequestDto request) in E:\.Net\Projects\Crop-Insurance-Farmer-Risk-Intelligence-Platform\Crop-Insurance\Backend-Crop-Insurrance\Backend-Crop-Insurrance\Controllers\AuthController.cs:line 47
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ActionMethodExecutor.TaskOfIActionResultExecutor.Execute(ActionContext actionContext, IActionResultTypeMapper mapper, ObjectMethodExecutor executor, Object controller, Object[] arguments)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.<InvokeActionMethodAsync>g__Awaited|12_0(ControllerActionInvoker invoker, ValueTask`1 actionResultValueTask)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.<InvokeNextActionFilterAsync>g__Awaited|10_0(ControllerActionInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.Rethrow(ActionExecutedContextSealed context)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.Next(State& next, Scope& scope, Object& state, Boolean& isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.<InvokeInnerFilterAsync>g__Awaited|13_0(ControllerActionInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeFilterPipelineAsync>g__Awaited|20_0(ResourceInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Awaited|17_0(ResourceInvoker invoker, Task task, IDisposable scope)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Awaited|17_0(ResourceInvoker invoker, Task task, IDisposable scope)
+   at Microsoft.AspNetCore.Authorization.AuthorizationMiddleware.Invoke(HttpContext context)
+   at Microsoft.AspNetCore.Authentication.AuthenticationMiddleware.Invoke(HttpContext context)
+   at Microsoft.AspNetCore.RateLimiting.RateLimitingMiddleware.InvokeInternal(HttpContext context, EnableRateLimitingAttribute enableRateLimitingAttribute)
+   at Authentication.Middleware.RequestLoggingMiddleware.InvokeAsync(HttpContext context) in E:\.Net\Projects\Crop-Insurance-Farmer-Risk-Intelligence-Platform\Crop-Insurance\Backend-Crop-Insurrance\Backend-Crop-Insurrance\Middleware\RequestLoggingMiddleware.cs:line 24
+   at Authentication.Middleware.SecurityHeadersMiddleware.InvokeAsync(HttpContext context) in E:\.Net\Projects\Crop-Insurance-Farmer-Risk-Intelligence-Platform\Crop-Insurance\Backend-Crop-Insurrance\Backend-Crop-Insurrance\Middleware\SecurityHeadersMiddleware.cs:line 48
+   at Authentication.Middleware.GlobalExceptionMiddleware.InvokeAsync(HttpContext context) in E:\.Net\Projects\Crop-Insurance-Farmer-Risk-Intelligence-Platform\Crop-Insurance\Backend-Crop-Insurrance\Backend-Crop-Insurrance\Middleware\GlobalExceptionMiddleware.cs:line 24
+2026-05-22 22:25:00.430 +05:30 [INF] Executed DbCommand (137ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT 1
+2026-05-22 22:25:00.634 +05:30 [INF] Acquiring an exclusive lock for migration application. See https://aka.ms/efcore-docs-migrations-lock for more information if this takes too long.
+2026-05-22 22:25:00.792 +05:30 [INF] Executed DbCommand (135ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+DECLARE @result int;
+EXEC @result = sp_getapplock @Resource = '__EFMigrationsLock', @LockOwner = 'Session', @LockMode = 'Exclusive';
+SELECT @result
+2026-05-22 22:25:01.125 +05:30 [INF] Executed DbCommand (20ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+IF OBJECT_ID(N'[__EFMigrationsHistory]') IS NULL
+BEGIN
+    CREATE TABLE [__EFMigrationsHistory] (
+        [MigrationId] nvarchar(150) NOT NULL,
+        [ProductVersion] nvarchar(32) NOT NULL,
+        CONSTRAINT [PK___EFMigrationsHistory] PRIMARY KEY ([MigrationId])
+    );
+END;
+2026-05-22 22:25:01.231 +05:30 [INF] Executed DbCommand (4ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT 1
+2026-05-22 22:25:01.258 +05:30 [INF] Executed DbCommand (13ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT OBJECT_ID(N'[__EFMigrationsHistory]');
+2026-05-22 22:25:01.308 +05:30 [INF] Executed DbCommand (27ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT [MigrationId], [ProductVersion]
+FROM [__EFMigrationsHistory]
+ORDER BY [MigrationId];
+2026-05-22 22:25:01.328 +05:30 [INF] No migrations were applied. The database is already up to date.
+2026-05-22 22:25:01.347 +05:30 [INF] Executed DbCommand (16ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+DECLARE @result int;
+EXEC @result = sp_releaseapplock @Resource = '__EFMigrationsLock', @LockOwner = 'Session';
+SELECT @result
+2026-05-22 22:25:01.991 +05:30 [INF] Executed DbCommand (40ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT CASE
+    WHEN EXISTS (
+        SELECT 1
+        FROM [Users] AS [u]
+        WHERE [u].[IsDeleted] = CAST(0 AS bit) AND [u].[Role] = N'Admin') THEN CAST(1 AS bit)
+    ELSE CAST(0 AS bit)
+END
+2026-05-22 22:25:02.034 +05:30 [INF] Admin account already exists. Skipping.
+2026-05-22 22:25:02.101 +05:30 [INF] Executed DbCommand (21ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT CASE
+    WHEN EXISTS (
+        SELECT 1
+        FROM [Users] AS [u]
+        WHERE [u].[IsDeleted] = CAST(0 AS bit) AND [u].[Role] = N'InsuranceAgent') THEN CAST(1 AS bit)
+    ELSE CAST(0 AS bit)
+END
+2026-05-22 22:25:02.110 +05:30 [INF] Agent account already exists. Skipping.
+2026-05-22 22:25:02.120 +05:30 [INF] Database seeding completed.
+2026-05-22 22:25:14.351 +05:30 [WRN] Failed to determine the https port for redirect.
+2026-05-22 22:25:22.647 +05:30 [INF] Executed DbCommand (220ms) [Parameters=[@Trim='?' (Size = 150)], CommandType='"Text"', CommandTimeout='30']
+SELECT [u0].[Id], [u0].[CreatedAtUtc], [u0].[Email], [u0].[EmailVerified], [u0].[FullName], [u0].[IsActive], [u0].[IsDeleted], [u0].[LastLoginAtUtc], [u0].[PasswordHash], [u0].[PhoneNumber], [u0].[Role], [u0].[UpdatedAtUtc], [r0].[Id], [r0].[CreatedAtUtc], [r0].[ExpiresAtUtc], [r0].[IsDeleted], [r0].[IsRevoked], [r0].[ReasonRevoked], [r0].[ReplacedByToken], [r0].[RevokedAtUtc], [r0].[Token], [r0].[UpdatedAtUtc], [r0].[UserId]
+FROM (
+    SELECT TOP(1) [u].[Id], [u].[CreatedAtUtc], [u].[Email], [u].[EmailVerified], [u].[FullName], [u].[IsActive], [u].[IsDeleted], [u].[LastLoginAtUtc], [u].[PasswordHash], [u].[PhoneNumber], [u].[Role], [u].[UpdatedAtUtc]
+    FROM [Users] AS [u]
+    WHERE [u].[IsDeleted] = CAST(0 AS bit) AND [u].[Email] = @Trim
+) AS [u0]
+LEFT JOIN (
+    SELECT [r].[Id], [r].[CreatedAtUtc], [r].[ExpiresAtUtc], [r].[IsDeleted], [r].[IsRevoked], [r].[ReasonRevoked], [r].[ReplacedByToken], [r].[RevokedAtUtc], [r].[Token], [r].[UpdatedAtUtc], [r].[UserId]
+    FROM [RefreshTokens] AS [r]
+    WHERE [r].[IsDeleted] = CAST(0 AS bit)
+) AS [r0] ON [u0].[Id] = [r0].[UserId]
+ORDER BY [u0].[Id]
+2026-05-22 22:25:25.894 +05:30 [INF] Executed DbCommand (22ms) [Parameters=[@p10='?' (DbType = Guid), @p0='?' (DbType = DateTime2), @p1='?' (DbType = DateTime2), @p2='?' (DbType = Boolean), @p3='?' (DbType = Boolean), @p4='?' (Size = 200), @p5='?' (Size = 256), @p6='?' (DbType = DateTime2), @p7='?' (Size = 256), @p8='?' (DbType = DateTime2), @p9='?' (DbType = Guid), @p13='?' (DbType = Guid), @p11='?' (DbType = DateTime2), @p12='?' (DbType = DateTime2)], CommandType='"Text"', CommandTimeout='30']
+SET NOCOUNT ON;
+UPDATE [RefreshTokens] SET [CreatedAtUtc] = @p0, [ExpiresAtUtc] = @p1, [IsDeleted] = @p2, [IsRevoked] = @p3, [ReasonRevoked] = @p4, [ReplacedByToken] = @p5, [RevokedAtUtc] = @p6, [Token] = @p7, [UpdatedAtUtc] = @p8, [UserId] = @p9
+OUTPUT 1
+WHERE [Id] = @p10;
+UPDATE [Users] SET [LastLoginAtUtc] = @p11, [UpdatedAtUtc] = @p12
+OUTPUT 1
+WHERE [Id] = @p13;
+2026-05-22 22:25:25.976 +05:30 [ERR] Unhandled exception on POST /api/auth/login
+Microsoft.EntityFrameworkCore.DbUpdateConcurrencyException: The database operation was expected to affect 1 row(s), but actually affected 0 row(s); data may have been modified or deleted since entities were loaded. See https://go.microsoft.com/fwlink/?LinkId=527962 for information on understanding and handling optimistic concurrency exceptions.
+   at Microsoft.EntityFrameworkCore.Update.AffectedCountModificationCommandBatch.ThrowAggregateUpdateConcurrencyExceptionAsync(RelationalDataReader reader, Int32 commandIndex, Int32 expectedRowsAffected, Int32 rowsAffected, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Update.AffectedCountModificationCommandBatch.ConsumeResultSetWithRowsAffectedOnlyAsync(Int32 commandIndex, RelationalDataReader reader, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Update.AffectedCountModificationCommandBatch.ConsumeAsync(RelationalDataReader reader, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Update.ReaderModificationCommandBatch.ExecuteAsync(IRelationalConnection connection, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Update.ReaderModificationCommandBatch.ExecuteAsync(IRelationalConnection connection, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.SqlServer.Update.Internal.SqlServerModificationCommandBatch.ExecuteAsync(IRelationalConnection connection, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Update.Internal.BatchExecutor.ExecuteAsync(IEnumerable`1 commandBatches, IRelationalConnection connection, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Update.Internal.BatchExecutor.ExecuteAsync(IEnumerable`1 commandBatches, IRelationalConnection connection, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Update.Internal.BatchExecutor.ExecuteAsync(IEnumerable`1 commandBatches, IRelationalConnection connection, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalDatabase.SaveChangesAsync(IList`1 entries, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.ChangeTracking.Internal.StateManager.SaveChangesAsync(IList`1 entriesToSave, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.ChangeTracking.Internal.StateManager.SaveChangesAsync(StateManager stateManager, Boolean acceptAllChangesOnSuccess, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.SqlServer.Storage.Internal.SqlServerExecutionStrategy.ExecuteAsync[TState,TResult](TState state, Func`4 operation, Func`4 verifySucceeded, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.DbContext.SaveChangesAsync(Boolean acceptAllChangesOnSuccess, CancellationToken cancellationToken)
+   at Authentication.Data.AppDbContext.SaveChangesAsync(CancellationToken cancellationToken) in E:\.Net\Projects\Crop-Insurance-Farmer-Risk-Intelligence-Platform\Crop-Insurance\Backend-Crop-Insurrance\Backend-Crop-Insurrance\Data\AppDbContext.cs:line 58
+   at Authentication.Services.BaseRepository`1.SaveChangesAsync() in E:\.Net\Projects\Crop-Insurance-Farmer-Risk-Intelligence-Platform\Crop-Insurance\Backend-Crop-Insurrance\Backend-Crop-Insurrance\Services\BaseRepository.cs:line 93
+   at Authentication.Services.AuthService.LoginAsync(LoginRequestDto request) in E:\.Net\Projects\Crop-Insurance-Farmer-Risk-Intelligence-Platform\Crop-Insurance\Backend-Crop-Insurrance\Backend-Crop-Insurrance\Services\AuthService.cs:line 153
+   at Authentication.Controllers.AuthController.Login(LoginRequestDto request) in E:\.Net\Projects\Crop-Insurance-Farmer-Risk-Intelligence-Platform\Crop-Insurance\Backend-Crop-Insurrance\Backend-Crop-Insurrance\Controllers\AuthController.cs:line 47
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ActionMethodExecutor.TaskOfIActionResultExecutor.Execute(ActionContext actionContext, IActionResultTypeMapper mapper, ObjectMethodExecutor executor, Object controller, Object[] arguments)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.<InvokeActionMethodAsync>g__Awaited|12_0(ControllerActionInvoker invoker, ValueTask`1 actionResultValueTask)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.<InvokeNextActionFilterAsync>g__Awaited|10_0(ControllerActionInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.Rethrow(ActionExecutedContextSealed context)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.Next(State& next, Scope& scope, Object& state, Boolean& isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.<InvokeInnerFilterAsync>g__Awaited|13_0(ControllerActionInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeFilterPipelineAsync>g__Awaited|20_0(ResourceInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Awaited|17_0(ResourceInvoker invoker, Task task, IDisposable scope)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Awaited|17_0(ResourceInvoker invoker, Task task, IDisposable scope)
+   at Microsoft.AspNetCore.Authorization.AuthorizationMiddleware.Invoke(HttpContext context)
+   at Microsoft.AspNetCore.Authentication.AuthenticationMiddleware.Invoke(HttpContext context)
+   at Microsoft.AspNetCore.RateLimiting.RateLimitingMiddleware.InvokeInternal(HttpContext context, EnableRateLimitingAttribute enableRateLimitingAttribute)
+   at Authentication.Middleware.RequestLoggingMiddleware.InvokeAsync(HttpContext context) in E:\.Net\Projects\Crop-Insurance-Farmer-Risk-Intelligence-Platform\Crop-Insurance\Backend-Crop-Insurrance\Backend-Crop-Insurrance\Middleware\RequestLoggingMiddleware.cs:line 24
+   at Authentication.Middleware.SecurityHeadersMiddleware.InvokeAsync(HttpContext context) in E:\.Net\Projects\Crop-Insurance-Farmer-Risk-Intelligence-Platform\Crop-Insurance\Backend-Crop-Insurrance\Backend-Crop-Insurrance\Middleware\SecurityHeadersMiddleware.cs:line 48
+   at Authentication.Middleware.GlobalExceptionMiddleware.InvokeAsync(HttpContext context) in E:\.Net\Projects\Crop-Insurance-Farmer-Risk-Intelligence-Platform\Crop-Insurance\Backend-Crop-Insurrance\Backend-Crop-Insurrance\Middleware\GlobalExceptionMiddleware.cs:line 24
+2026-05-22 22:31:05.616 +05:30 [INF] Executed DbCommand (44ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT 1
+2026-05-22 22:31:05.721 +05:30 [INF] Acquiring an exclusive lock for migration application. See https://aka.ms/efcore-docs-migrations-lock for more information if this takes too long.
+2026-05-22 22:31:05.840 +05:30 [INF] Executed DbCommand (105ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+DECLARE @result int;
+EXEC @result = sp_getapplock @Resource = '__EFMigrationsLock', @LockOwner = 'Session', @LockMode = 'Exclusive';
+SELECT @result
+2026-05-22 22:31:06.181 +05:30 [INF] Executed DbCommand (5ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+IF OBJECT_ID(N'[__EFMigrationsHistory]') IS NULL
+BEGIN
+    CREATE TABLE [__EFMigrationsHistory] (
+        [MigrationId] nvarchar(150) NOT NULL,
+        [ProductVersion] nvarchar(32) NOT NULL,
+        CONSTRAINT [PK___EFMigrationsHistory] PRIMARY KEY ([MigrationId])
+    );
+END;
+2026-05-22 22:31:06.240 +05:30 [INF] Executed DbCommand (1ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT 1
+2026-05-22 22:31:06.249 +05:30 [INF] Executed DbCommand (2ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT OBJECT_ID(N'[__EFMigrationsHistory]');
+2026-05-22 22:31:06.272 +05:30 [INF] Executed DbCommand (9ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT [MigrationId], [ProductVersion]
+FROM [__EFMigrationsHistory]
+ORDER BY [MigrationId];
+2026-05-22 22:31:06.305 +05:30 [INF] No migrations were applied. The database is already up to date.
+2026-05-22 22:31:06.315 +05:30 [INF] Executed DbCommand (5ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+DECLARE @result int;
+EXEC @result = sp_releaseapplock @Resource = '__EFMigrationsLock', @LockOwner = 'Session';
+SELECT @result
+2026-05-22 22:31:07.318 +05:30 [INF] Executed DbCommand (8ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT CASE
+    WHEN EXISTS (
+        SELECT 1
+        FROM [Users] AS [u]
+        WHERE [u].[IsDeleted] = CAST(0 AS bit) AND [u].[Role] = N'Admin') THEN CAST(1 AS bit)
+    ELSE CAST(0 AS bit)
+END
+2026-05-22 22:31:07.340 +05:30 [INF] Admin account already exists. Skipping.
+2026-05-22 22:31:07.361 +05:30 [INF] Executed DbCommand (5ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT CASE
+    WHEN EXISTS (
+        SELECT 1
+        FROM [Users] AS [u]
+        WHERE [u].[IsDeleted] = CAST(0 AS bit) AND [u].[Role] = N'InsuranceAgent') THEN CAST(1 AS bit)
+    ELSE CAST(0 AS bit)
+END
+2026-05-22 22:31:08.867 +05:30 [INF] Executed DbCommand (77ms) [Parameters=[@p0='?' (DbType = Guid), @p1='?' (DbType = DateTime2), @p2='?' (Size = 150), @p3='?' (DbType = Boolean), @p4='?' (Size = 100), @p5='?' (DbType = Boolean), @p6='?' (DbType = DateTime2), @p7='?' (Size = 4000), @p8='?' (Size = 15), @p9='?' (Size = 20), @p10='?' (DbType = DateTime2), @p11='?' (DbType = Guid), @p12='?' (Size = 20), @p13='?' (Size = 100), @p14='?' (DbType = DateTime2), @p15='?' (DbType = Boolean), @p16='?' (DbType = Boolean), @p17='?' (Size = 50), @p18='?' (DbType = Int32), @p19='?' (DbType = DateTime2), @p20='?' (DbType = Guid)], CommandType='"Text"', CommandTimeout='30']
+SET NOCOUNT ON;
+INSERT INTO [Users] ([Id], [CreatedAtUtc], [Email], [EmailVerified], [FullName], [IsDeleted], [LastLoginAtUtc], [PasswordHash], [PhoneNumber], [Role], [UpdatedAtUtc])
+OUTPUT INSERTED.[IsActive]
+VALUES (@p0, @p1, @p2, @p3, @p4, @p5, @p6, @p7, @p8, @p9, @p10);
+INSERT INTO [AgentProfiles] ([Id], [AgentCode], [AssignedDistrict], [CreatedAtUtc], [IsDeleted], [IsVerified], [LicenseNumber], [TotalClaimsHandled], [UpdatedAtUtc], [UserId])
+VALUES (@p11, @p12, @p13, @p14, @p15, @p16, @p17, @p18, @p19, @p20);
+2026-05-22 22:31:08.937 +05:30 [INF] Sample agent seeded: agent@cropinsurance.com
+2026-05-22 22:31:08.941 +05:30 [INF] Database seeding completed.
+2026-05-22 22:31:09.580 +05:30 [WRN] Failed to determine the https port for redirect.
+2026-05-22 22:31:10.812 +05:30 [INF] Executed DbCommand (25ms) [Parameters=[@Trim='?' (Size = 150)], CommandType='"Text"', CommandTimeout='30']
+SELECT [u0].[Id], [u0].[CreatedAtUtc], [u0].[Email], [u0].[EmailVerified], [u0].[FullName], [u0].[IsActive], [u0].[IsDeleted], [u0].[LastLoginAtUtc], [u0].[PasswordHash], [u0].[PhoneNumber], [u0].[Role], [u0].[UpdatedAtUtc], [r0].[Id], [r0].[CreatedAtUtc], [r0].[ExpiresAtUtc], [r0].[IsDeleted], [r0].[IsRevoked], [r0].[ReasonRevoked], [r0].[ReplacedByToken], [r0].[RevokedAtUtc], [r0].[Token], [r0].[UpdatedAtUtc], [r0].[UserId]
+FROM (
+    SELECT TOP(1) [u].[Id], [u].[CreatedAtUtc], [u].[Email], [u].[EmailVerified], [u].[FullName], [u].[IsActive], [u].[IsDeleted], [u].[LastLoginAtUtc], [u].[PasswordHash], [u].[PhoneNumber], [u].[Role], [u].[UpdatedAtUtc]
+    FROM [Users] AS [u]
+    WHERE [u].[IsDeleted] = CAST(0 AS bit) AND [u].[Email] = @Trim
+) AS [u0]
+LEFT JOIN (
+    SELECT [r].[Id], [r].[CreatedAtUtc], [r].[ExpiresAtUtc], [r].[IsDeleted], [r].[IsRevoked], [r].[ReasonRevoked], [r].[ReplacedByToken], [r].[RevokedAtUtc], [r].[Token], [r].[UpdatedAtUtc], [r].[UserId]
+    FROM [RefreshTokens] AS [r]
+    WHERE [r].[IsDeleted] = CAST(0 AS bit)
+) AS [r0] ON [u0].[Id] = [r0].[UserId]
+ORDER BY [u0].[Id]
+2026-05-22 22:31:10.850 +05:30 [ERR] Unhandled exception on POST /api/auth/login
+System.UnauthorizedAccessException: Invalid email or password.
+   at Authentication.Services.AuthService.LoginAsync(LoginRequestDto request) in E:\.Net\Projects\Crop-Insurance-Farmer-Risk-Intelligence-Platform\Crop-Insurance\Backend-Crop-Insurrance\Backend-Crop-Insurrance\Services\AuthService.cs:line 123
+   at Authentication.Controllers.AuthController.Login(LoginRequestDto request) in E:\.Net\Projects\Crop-Insurance-Farmer-Risk-Intelligence-Platform\Crop-Insurance\Backend-Crop-Insurrance\Backend-Crop-Insurrance\Controllers\AuthController.cs:line 47
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ActionMethodExecutor.TaskOfIActionResultExecutor.Execute(ActionContext actionContext, IActionResultTypeMapper mapper, ObjectMethodExecutor executor, Object controller, Object[] arguments)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.<InvokeActionMethodAsync>g__Awaited|12_0(ControllerActionInvoker invoker, ValueTask`1 actionResultValueTask)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.<InvokeNextActionFilterAsync>g__Awaited|10_0(ControllerActionInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.Rethrow(ActionExecutedContextSealed context)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.Next(State& next, Scope& scope, Object& state, Boolean& isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.<InvokeInnerFilterAsync>g__Awaited|13_0(ControllerActionInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeFilterPipelineAsync>g__Awaited|20_0(ResourceInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Awaited|17_0(ResourceInvoker invoker, Task task, IDisposable scope)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Awaited|17_0(ResourceInvoker invoker, Task task, IDisposable scope)
+   at Microsoft.AspNetCore.Authorization.AuthorizationMiddleware.Invoke(HttpContext context)
+   at Microsoft.AspNetCore.Authentication.AuthenticationMiddleware.Invoke(HttpContext context)
+   at Microsoft.AspNetCore.RateLimiting.RateLimitingMiddleware.InvokeInternal(HttpContext context, EnableRateLimitingAttribute enableRateLimitingAttribute)
+   at Authentication.Middleware.RequestLoggingMiddleware.InvokeAsync(HttpContext context) in E:\.Net\Projects\Crop-Insurance-Farmer-Risk-Intelligence-Platform\Crop-Insurance\Backend-Crop-Insurrance\Backend-Crop-Insurrance\Middleware\RequestLoggingMiddleware.cs:line 24
+   at Authentication.Middleware.SecurityHeadersMiddleware.InvokeAsync(HttpContext context) in E:\.Net\Projects\Crop-Insurance-Farmer-Risk-Intelligence-Platform\Crop-Insurance\Backend-Crop-Insurrance\Backend-Crop-Insurrance\Middleware\SecurityHeadersMiddleware.cs:line 48
+   at Authentication.Middleware.GlobalExceptionMiddleware.InvokeAsync(HttpContext context) in E:\.Net\Projects\Crop-Insurance-Farmer-Risk-Intelligence-Platform\Crop-Insurance\Backend-Crop-Insurrance\Backend-Crop-Insurrance\Middleware\GlobalExceptionMiddleware.cs:line 24
+2026-05-22 22:31:22.220 +05:30 [INF] Executed DbCommand (12ms) [Parameters=[@Trim='?' (Size = 150)], CommandType='"Text"', CommandTimeout='30']
+SELECT CASE
+    WHEN EXISTS (
+        SELECT 1
+        FROM [Users] AS [u]
+        WHERE [u].[IsDeleted] = CAST(0 AS bit) AND [u].[Email] = @Trim) THEN CAST(1 AS bit)
+    ELSE CAST(0 AS bit)
+END
+2026-05-22 22:31:23.576 +05:30 [INF] Executed DbCommand (28ms) [Parameters=[@p0='?' (DbType = Guid), @p1='?' (DbType = DateTime2), @p2='?' (Size = 150), @p3='?' (Size = 100), @p4='?' (DbType = Boolean), @p5='?' (DbType = DateTime2), @p6='?' (Size = 4000), @p7='?' (Size = 15), @p8='?' (Size = 20), @p9='?' (DbType = DateTime2), @p10='?' (DbType = Guid), @p11='?' (Size = 12), @p12='?' (DbType = DateTime2), @p13='?' (Size = 100), @p14='?' (DbType = Boolean), @p15='?' (DbType = Boolean), @p16='?' (Size = 100), @p17='?' (Precision = 10) (Scale = 2) (DbType = Decimal), @p18='?' (DbType = DateTime2), @p19='?' (DbType = Guid), @p20='?' (Size = 100), @p21='?' (DbType = Guid), @p22='?' (DbType = DateTime2), @p23='?' (DbType = DateTime2), @p24='?' (DbType = Boolean), @p25='?' (Size = 200), @p26='?' (Size = 256), @p27='?' (DbType = DateTime2), @p28='?' (Size = 256), @p29='?' (DbType = DateTime2), @p30='?' (DbType = Guid)], CommandType='"Text"', CommandTimeout='30']
+SET NOCOUNT ON;
+INSERT INTO [Users] ([Id], [CreatedAtUtc], [Email], [FullName], [IsDeleted], [LastLoginAtUtc], [PasswordHash], [PhoneNumber], [Role], [UpdatedAtUtc])
+OUTPUT INSERTED.[EmailVerified], INSERTED.[IsActive]
+VALUES (@p0, @p1, @p2, @p3, @p4, @p5, @p6, @p7, @p8, @p9);
+INSERT INTO [FarmerProfiles] ([Id], [AadhaarNumber], [CreatedAtUtc], [District], [IsDeleted], [IsKycVerified], [State], [TotalLandAcres], [UpdatedAtUtc], [UserId], [Village])
+VALUES (@p10, @p11, @p12, @p13, @p14, @p15, @p16, @p17, @p18, @p19, @p20);
+INSERT INTO [RefreshTokens] ([Id], [CreatedAtUtc], [ExpiresAtUtc], [IsDeleted], [ReasonRevoked], [ReplacedByToken], [RevokedAtUtc], [Token], [UpdatedAtUtc], [UserId])
+OUTPUT INSERTED.[IsRevoked]
+VALUES (@p21, @p22, @p23, @p24, @p25, @p26, @p27, @p28, @p29, @p30);
+2026-05-22 22:31:23.839 +05:30 [INF] POST /api/auth/register → 200 in 2169ms
+2026-05-22 22:31:29.018 +05:30 [INF] Executed DbCommand (25ms) [Parameters=[@Trim='?' (Size = 150)], CommandType='"Text"', CommandTimeout='30']
+SELECT [u0].[Id], [u0].[CreatedAtUtc], [u0].[Email], [u0].[EmailVerified], [u0].[FullName], [u0].[IsActive], [u0].[IsDeleted], [u0].[LastLoginAtUtc], [u0].[PasswordHash], [u0].[PhoneNumber], [u0].[Role], [u0].[UpdatedAtUtc], [r0].[Id], [r0].[CreatedAtUtc], [r0].[ExpiresAtUtc], [r0].[IsDeleted], [r0].[IsRevoked], [r0].[ReasonRevoked], [r0].[ReplacedByToken], [r0].[RevokedAtUtc], [r0].[Token], [r0].[UpdatedAtUtc], [r0].[UserId]
+FROM (
+    SELECT TOP(1) [u].[Id], [u].[CreatedAtUtc], [u].[Email], [u].[EmailVerified], [u].[FullName], [u].[IsActive], [u].[IsDeleted], [u].[LastLoginAtUtc], [u].[PasswordHash], [u].[PhoneNumber], [u].[Role], [u].[UpdatedAtUtc]
+    FROM [Users] AS [u]
+    WHERE [u].[IsDeleted] = CAST(0 AS bit) AND [u].[Email] = @Trim
+) AS [u0]
+LEFT JOIN (
+    SELECT [r].[Id], [r].[CreatedAtUtc], [r].[ExpiresAtUtc], [r].[IsDeleted], [r].[IsRevoked], [r].[ReasonRevoked], [r].[ReplacedByToken], [r].[RevokedAtUtc], [r].[Token], [r].[UpdatedAtUtc], [r].[UserId]
+    FROM [RefreshTokens] AS [r]
+    WHERE [r].[IsDeleted] = CAST(0 AS bit)
+) AS [r0] ON [u0].[Id] = [r0].[UserId]
+ORDER BY [u0].[Id]
+2026-05-22 22:31:29.964 +05:30 [INF] Executed DbCommand (16ms) [Parameters=[@p10='?' (DbType = Guid), @p0='?' (DbType = DateTime2), @p1='?' (DbType = DateTime2), @p2='?' (DbType = Boolean), @p3='?' (DbType = Boolean), @p4='?' (Size = 200), @p5='?' (Size = 256), @p6='?' (DbType = DateTime2), @p7='?' (Size = 256), @p8='?' (DbType = DateTime2), @p9='?' (DbType = Guid), @p13='?' (DbType = Guid), @p11='?' (DbType = DateTime2), @p12='?' (DbType = DateTime2)], CommandType='"Text"', CommandTimeout='30']
+SET NOCOUNT ON;
+UPDATE [RefreshTokens] SET [CreatedAtUtc] = @p0, [ExpiresAtUtc] = @p1, [IsDeleted] = @p2, [IsRevoked] = @p3, [ReasonRevoked] = @p4, [ReplacedByToken] = @p5, [RevokedAtUtc] = @p6, [Token] = @p7, [UpdatedAtUtc] = @p8, [UserId] = @p9
+OUTPUT 1
+WHERE [Id] = @p10;
+UPDATE [Users] SET [LastLoginAtUtc] = @p11, [UpdatedAtUtc] = @p12
+OUTPUT 1
+WHERE [Id] = @p13;
+2026-05-22 22:31:30.029 +05:30 [ERR] Unhandled exception on POST /api/auth/login
+Microsoft.EntityFrameworkCore.DbUpdateConcurrencyException: The database operation was expected to affect 1 row(s), but actually affected 0 row(s); data may have been modified or deleted since entities were loaded. See https://go.microsoft.com/fwlink/?LinkId=527962 for information on understanding and handling optimistic concurrency exceptions.
+   at Microsoft.EntityFrameworkCore.Update.AffectedCountModificationCommandBatch.ThrowAggregateUpdateConcurrencyExceptionAsync(RelationalDataReader reader, Int32 commandIndex, Int32 expectedRowsAffected, Int32 rowsAffected, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Update.AffectedCountModificationCommandBatch.ConsumeResultSetWithRowsAffectedOnlyAsync(Int32 commandIndex, RelationalDataReader reader, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Update.AffectedCountModificationCommandBatch.ConsumeAsync(RelationalDataReader reader, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Update.ReaderModificationCommandBatch.ExecuteAsync(IRelationalConnection connection, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Update.ReaderModificationCommandBatch.ExecuteAsync(IRelationalConnection connection, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.SqlServer.Update.Internal.SqlServerModificationCommandBatch.ExecuteAsync(IRelationalConnection connection, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Update.Internal.BatchExecutor.ExecuteAsync(IEnumerable`1 commandBatches, IRelationalConnection connection, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Update.Internal.BatchExecutor.ExecuteAsync(IEnumerable`1 commandBatches, IRelationalConnection connection, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Update.Internal.BatchExecutor.ExecuteAsync(IEnumerable`1 commandBatches, IRelationalConnection connection, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalDatabase.SaveChangesAsync(IList`1 entries, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.ChangeTracking.Internal.StateManager.SaveChangesAsync(IList`1 entriesToSave, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.ChangeTracking.Internal.StateManager.SaveChangesAsync(StateManager stateManager, Boolean acceptAllChangesOnSuccess, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.SqlServer.Storage.Internal.SqlServerExecutionStrategy.ExecuteAsync[TState,TResult](TState state, Func`4 operation, Func`4 verifySucceeded, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.DbContext.SaveChangesAsync(Boolean acceptAllChangesOnSuccess, CancellationToken cancellationToken)
+   at Authentication.Data.AppDbContext.SaveChangesAsync(CancellationToken cancellationToken) in E:\.Net\Projects\Crop-Insurance-Farmer-Risk-Intelligence-Platform\Crop-Insurance\Backend-Crop-Insurrance\Backend-Crop-Insurrance\Data\AppDbContext.cs:line 58
+   at Authentication.Services.BaseRepository`1.SaveChangesAsync() in E:\.Net\Projects\Crop-Insurance-Farmer-Risk-Intelligence-Platform\Crop-Insurance\Backend-Crop-Insurrance\Backend-Crop-Insurrance\Services\BaseRepository.cs:line 93
+   at Authentication.Services.AuthService.LoginAsync(LoginRequestDto request) in E:\.Net\Projects\Crop-Insurance-Farmer-Risk-Intelligence-Platform\Crop-Insurance\Backend-Crop-Insurrance\Backend-Crop-Insurrance\Services\AuthService.cs:line 153
+   at Authentication.Controllers.AuthController.Login(LoginRequestDto request) in E:\.Net\Projects\Crop-Insurance-Farmer-Risk-Intelligence-Platform\Crop-Insurance\Backend-Crop-Insurrance\Backend-Crop-Insurrance\Controllers\AuthController.cs:line 47
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ActionMethodExecutor.TaskOfIActionResultExecutor.Execute(ActionContext actionContext, IActionResultTypeMapper mapper, ObjectMethodExecutor executor, Object controller, Object[] arguments)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.<InvokeActionMethodAsync>g__Awaited|12_0(ControllerActionInvoker invoker, ValueTask`1 actionResultValueTask)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.<InvokeNextActionFilterAsync>g__Awaited|10_0(ControllerActionInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.Rethrow(ActionExecutedContextSealed context)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.Next(State& next, Scope& scope, Object& state, Boolean& isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.<InvokeInnerFilterAsync>g__Awaited|13_0(ControllerActionInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeFilterPipelineAsync>g__Awaited|20_0(ResourceInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Awaited|17_0(ResourceInvoker invoker, Task task, IDisposable scope)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Awaited|17_0(ResourceInvoker invoker, Task task, IDisposable scope)
+   at Microsoft.AspNetCore.Authorization.AuthorizationMiddleware.Invoke(HttpContext context)
+   at Microsoft.AspNetCore.Authentication.AuthenticationMiddleware.Invoke(HttpContext context)
+   at Microsoft.AspNetCore.RateLimiting.RateLimitingMiddleware.InvokeInternal(HttpContext context, EnableRateLimitingAttribute enableRateLimitingAttribute)
+   at Authentication.Middleware.RequestLoggingMiddleware.InvokeAsync(HttpContext context) in E:\.Net\Projects\Crop-Insurance-Farmer-Risk-Intelligence-Platform\Crop-Insurance\Backend-Crop-Insurrance\Backend-Crop-Insurrance\Middleware\RequestLoggingMiddleware.cs:line 24
+   at Authentication.Middleware.SecurityHeadersMiddleware.InvokeAsync(HttpContext context) in E:\.Net\Projects\Crop-Insurance-Farmer-Risk-Intelligence-Platform\Crop-Insurance\Backend-Crop-Insurrance\Backend-Crop-Insurrance\Middleware\SecurityHeadersMiddleware.cs:line 48
+   at Authentication.Middleware.GlobalExceptionMiddleware.InvokeAsync(HttpContext context) in E:\.Net\Projects\Crop-Insurance-Farmer-Risk-Intelligence-Platform\Crop-Insurance\Backend-Crop-Insurrance\Backend-Crop-Insurrance\Middleware\GlobalExceptionMiddleware.cs:line 24
