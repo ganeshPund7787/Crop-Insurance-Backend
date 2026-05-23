@@ -32,14 +32,12 @@ public class AuthService : IAuthService
     }
 
     // ─── Register ──────────────────────────────────────────────────────────
-    public async Task<AuthResponseDto> RegisterAsync(RegisterRequestDto request)
+    public async Task<AuthTokensDto> RegisterAsync(RegisterRequestDto request)
     {
-        // ── 1. Duplicate email check ───────────────────────────────────────
         if (await _userRepository.EmailExistsAsync(request.Email))
             throw new InvalidOperationException(
                 "An account with this email already exists.");
 
-        // ── 2. Build User entity ───────────────────────────────────────────
         var user = new User
         {
             FullName = request.FullName.Trim(),
@@ -51,9 +49,6 @@ public class AuthService : IAuthService
             EmailVerified = false
         };
 
-        // ── 3. Create role-specific profile ────────────────────────────────
-        // Each role gets its own profile table — separation of concerns
-        // Profile is created atomically with the user in same SaveChanges
         switch (request.Role)
         {
             case UserRole.Farmer:
@@ -71,62 +66,56 @@ public class AuthService : IAuthService
             case UserRole.InsuranceAgent:
                 if (string.IsNullOrWhiteSpace(request.AgentCode))
                     throw new InvalidOperationException(
-                        "Agent code is required for Insurance Agent registration.");
+                        "Agent code is required for agent registration.");
 
                 if (string.IsNullOrWhiteSpace(request.LicenseNumber))
                     throw new InvalidOperationException(
-                        "License number is required for Insurance Agent registration.");
+                        "License number is required for agent registration.");
 
                 user.AgentProfile = new AgentProfile
                 {
                     AgentCode = request.AgentCode.Trim(),
                     LicenseNumber = request.LicenseNumber.Trim(),
-                    AssignedDistrict = request.AssignedDistrict?.Trim() ?? string.Empty,
+                    AssignedDistrict = request.AssignedDistrict?.Trim()
+                                       ?? string.Empty,
                     IsVerified = false
                 };
                 break;
 
             case UserRole.Admin:
-                // Admin accounts created by super admin only
-                // No additional profile needed
                 break;
         }
 
-        // ── 4. Generate refresh token ──────────────────────────────────────
         await _userRepository.AddAsync(user);
-        await _userRepository.SaveChangesAsync(); // Save user first to get Id in DB
+        await _userRepository.SaveChangesAsync();
 
         var refreshToken = _tokenService.GenerateRefreshToken();
-        refreshToken.UserId = user.Id;      // ✅ user.Id now exists in DB
+        refreshToken.UserId = user.Id;
         refreshToken.CreatedAtUtc = DateTime.UtcNow;
 
         await _refreshTokenRepository.AddAsync(refreshToken);
         await _refreshTokenRepository.SaveChangesAsync();
-        // ── 6. Generate access token ───────────────────────────────────────
+
         var accessToken = _tokenService.GenerateAccessToken(user);
 
-        return BuildAuthResponse(user, accessToken, refreshToken.Token);
+        // ── Return tokens + user info — controller sets cookies ────────────
+        return BuildTokensDto(user, accessToken, refreshToken.Token);
     }
 
     // ─── Login ─────────────────────────────────────────────────────────────
-    public async Task<AuthResponseDto> LoginAsync(LoginRequestDto request)
+    public async Task<AuthTokensDto> LoginAsync(LoginRequestDto request)
     {
-        // ── 1. Find user ───────────────────────────────────────────────────────
         var user = await _userRepository.GetByEmailAsync(request.Email);
 
-        // ── 2. Validate credentials ────────────────────────────────────────────
         if (user is null ||
             !PasswordHelper.VerifyPassword(request.Password, user.PasswordHash))
-        {
             throw new UnauthorizedAccessException("Invalid email or password.");
-        }
 
-        // ── 3. Account status check ────────────────────────────────────────────
         if (!user.IsActive)
             throw new UnauthorizedAccessException(
                 "Your account has been deactivated. Contact support.");
 
-        // ── 4. Clean up expired tokens ─────────────────────────────────────────
+        // Clean up expired tokens
         var expiredTokens = user.RefreshTokens
             .Where(t => t.IsExpired && !t.IsRevoked)
             .ToList();
@@ -138,48 +127,36 @@ public class AuthService : IAuthService
             expired.ReasonRevoked = "Expired — cleaned up on login";
         }
 
-        // ── 5. Track last login ────────────────────────────────────────────────
         user.LastLoginAtUtc = DateTime.UtcNow;
 
-        // ── 6. Build and attach refresh token ──────────────────────────────────
-        // ✅ Set UserId explicitly BEFORE adding to collection
         var refreshToken = _tokenService.GenerateRefreshToken();
         refreshToken.UserId = user.Id;
         refreshToken.CreatedAtUtc = DateTime.UtcNow;
 
-        // ✅ Add directly to DbContext — do NOT use user.RefreshTokens.Add()
-        // This avoids EF state confusion on the navigation collection
         await _refreshTokenRepository.AddAsync(refreshToken);
-
-        // ── 7. Save all in one transaction ────────────────────────────────────
         await _userRepository.SaveChangesAsync();
 
-        // ── 8. Generate access token ───────────────────────────────────────────
         var accessToken = _tokenService.GenerateAccessToken(user);
 
-        return BuildAuthResponse(user, accessToken, refreshToken.Token);
+        return BuildTokensDto(user, accessToken, refreshToken.Token);
     }
+
     // ─── Refresh Token ─────────────────────────────────────────────────────
-    public async Task<AuthResponseDto> RefreshTokenAsync(
-        RefreshTokenRequestDto request)
+    public async Task<AuthTokensDto> RefreshTokenAsync(string refreshToken)
     {
-        // ── 1. Find user by refresh token ──────────────────────────────────
         var user = await _refreshTokenRepository
-            .GetUserByRefreshTokenAsync(request.RefreshToken);
+            .GetUserByRefreshTokenAsync(refreshToken);
 
         if (user is null)
             throw new UnauthorizedAccessException("Invalid refresh token.");
 
-        // ── 2. Find the specific token record ──────────────────────────────
         var existingToken = user.RefreshTokens
-            .SingleOrDefault(t => t.Token == request.RefreshToken);
+            .SingleOrDefault(t => t.Token == refreshToken);
 
         if (existingToken is null)
             throw new UnauthorizedAccessException("Invalid refresh token.");
 
-        // ── 3. Detect token reuse attack ───────────────────────────────────
-        // If a revoked token is used again — it was stolen
-        // Revoke ALL tokens for this user immediately
+        // Detect reuse attack — revoke all sessions
         if (existingToken.IsRevoked)
         {
             await _refreshTokenRepository.RevokeAllUserTokensAsync(
@@ -187,49 +164,43 @@ public class AuthService : IAuthService
                 "Suspicious activity — revoked token reuse detected");
 
             throw new UnauthorizedAccessException(
-                "Refresh token has been revoked. All sessions terminated.");
+                "Security violation detected. All sessions terminated.");
         }
 
-        // ── 4. Check token expiry ──────────────────────────────────────────
         if (existingToken.IsExpired)
             throw new UnauthorizedAccessException(
-                "Refresh token has expired. Please login again.");
+                "Refresh token expired. Please login again.");
 
-        // ── 5. Rotate — revoke old, issue new ─────────────────────────────
-        // Token rotation: every refresh produces a brand new token
-        // Old token immediately invalidated
+        // Rotate token
         var newRefreshToken = _tokenService.GenerateRefreshToken();
         newRefreshToken.UserId = user.Id;
+        newRefreshToken.CreatedAtUtc = DateTime.UtcNow;
 
         existingToken.IsRevoked = true;
         existingToken.RevokedAtUtc = DateTime.UtcNow;
         existingToken.ReasonRevoked = "Replaced by token rotation";
         existingToken.ReplacedByToken = newRefreshToken.Token;
 
-        //user.RefreshTokens.Add(newRefreshToken);
-
-        //await _userRepository.SaveChangesAsync();
         await _refreshTokenRepository.AddAsync(newRefreshToken);
-        await _userRepository.SaveChangesAsync(); // saves revoked old token
+        await _userRepository.SaveChangesAsync();
         await _refreshTokenRepository.SaveChangesAsync();
 
-        // ── 6. Issue new access token ──────────────────────────────────────
         var accessToken = _tokenService.GenerateAccessToken(user);
 
-        return BuildAuthResponse(user, accessToken, newRefreshToken.Token);
+        return BuildTokensDto(user, accessToken, newRefreshToken.Token);
     }
 
     // ─── Revoke Token ──────────────────────────────────────────────────────
-    public async Task RevokeTokenAsync(RevokeTokenRequestDto request)
+    public async Task RevokeTokenAsync(string refreshToken)
     {
         var user = await _refreshTokenRepository
-            .GetUserByRefreshTokenAsync(request.RefreshToken);
+            .GetUserByRefreshTokenAsync(refreshToken);
 
         if (user is null)
             throw new UnauthorizedAccessException("Invalid refresh token.");
 
         var token = user.RefreshTokens
-            .SingleOrDefault(t => t.Token == request.RefreshToken);
+            .SingleOrDefault(t => t.Token == refreshToken);
 
         if (token is null || token.IsRevoked)
             throw new InvalidOperationException(
@@ -247,58 +218,53 @@ public class AuthService : IAuthService
         Guid userId,
         ChangePasswordRequestDto request)
     {
-        // ── 1. Validate new passwords match ────────────────────────────────
         if (request.NewPassword != request.ConfirmNewPassword)
             throw new InvalidOperationException(
-                "New password and confirmation do not match.");
+                "Passwords do not match.");
 
-        // ── 2. Load user with tokens ───────────────────────────────────────
         var user = await _userRepository
-            .GetByIdWithRefreshTokensAsync(userId);
+            .GetByIdWithRefreshTokensAsync(userId)
+            ?? throw new InvalidOperationException("User not found.");
 
-        if (user is null)
-            throw new InvalidOperationException("User not found.");
-
-        // ── 3. Verify current password ─────────────────────────────────────
         if (!PasswordHelper.VerifyPassword(
                 request.CurrentPassword, user.PasswordHash))
-        {
             throw new UnauthorizedAccessException(
                 "Current password is incorrect.");
-        }
 
-        // ── 4. Hash and update new password ───────────────────────────────
         user.PasswordHash = PasswordHelper.HashPassword(request.NewPassword);
         user.UpdatedAtUtc = DateTime.UtcNow;
 
-        // ── 5. Revoke ALL refresh tokens ───────────────────────────────────
-        // Password change = all existing sessions invalidated
-        // User must log in again on all devices
         await _refreshTokenRepository.RevokeAllUserTokensAsync(
-            userId,
-            "All sessions revoked after password change");
+            userId, "All sessions revoked after password change");
 
         await _userRepository.SaveChangesAsync();
 
         return true;
     }
 
-    // ─── Private Helper ────────────────────────────────────────────────────
-    private AuthResponseDto BuildAuthResponse(
+    // ─── Internal DTO — carries tokens to controller ───────────────────────
+    // Controller reads these and sets HttpOnly cookies
+    // Tokens never leave the server in response body
+    private AuthTokensDto BuildTokensDto(
         User user,
         string accessToken,
-        string refreshToken)    
+        string refreshToken)
     {
-        return new AuthResponseDto
+        return new AuthTokensDto
         {
             AccessToken = accessToken,
             RefreshToken = refreshToken,
             AccessTokenExpiresAtUtc = DateTime.UtcNow.AddMinutes(
-                                         _jwtSettings.AccessTokenExpirationMinutes),
-            UserId = user.Id,
-            FullName = user.FullName,
-            Email = user.Email,
-            Role = user.Role.ToString()
+                                          _jwtSettings.AccessTokenExpirationMinutes),
+            UserInfo = new AuthResponseDto
+            {
+                UserId = user.Id,
+                FullName = user.FullName,
+                Email = user.Email,
+                Role = user.Role.ToString(),
+                AccessTokenExpiresAtUtc = DateTime.UtcNow.AddMinutes(
+                                              _jwtSettings.AccessTokenExpirationMinutes)
+            }
         };
     }
 }

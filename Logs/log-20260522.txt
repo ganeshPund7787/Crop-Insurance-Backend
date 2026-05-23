@@ -1054,3 +1054,282 @@ Microsoft.EntityFrameworkCore.DbUpdateConcurrencyException: The database operati
    at Authentication.Middleware.RequestLoggingMiddleware.InvokeAsync(HttpContext context) in E:\.Net\Projects\Crop-Insurance-Farmer-Risk-Intelligence-Platform\Crop-Insurance\Backend-Crop-Insurrance\Backend-Crop-Insurrance\Middleware\RequestLoggingMiddleware.cs:line 24
    at Authentication.Middleware.SecurityHeadersMiddleware.InvokeAsync(HttpContext context) in E:\.Net\Projects\Crop-Insurance-Farmer-Risk-Intelligence-Platform\Crop-Insurance\Backend-Crop-Insurrance\Backend-Crop-Insurrance\Middleware\SecurityHeadersMiddleware.cs:line 48
    at Authentication.Middleware.GlobalExceptionMiddleware.InvokeAsync(HttpContext context) in E:\.Net\Projects\Crop-Insurance-Farmer-Risk-Intelligence-Platform\Crop-Insurance\Backend-Crop-Insurrance\Backend-Crop-Insurrance\Middleware\GlobalExceptionMiddleware.cs:line 24
+2026-05-22 23:13:51.587 +05:30 [INF] Executed DbCommand (139ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT 1
+2026-05-22 23:13:51.838 +05:30 [INF] Acquiring an exclusive lock for migration application. See https://aka.ms/efcore-docs-migrations-lock for more information if this takes too long.
+2026-05-22 23:13:52.110 +05:30 [INF] Executed DbCommand (243ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+DECLARE @result int;
+EXEC @result = sp_getapplock @Resource = '__EFMigrationsLock', @LockOwner = 'Session', @LockMode = 'Exclusive';
+SELECT @result
+2026-05-22 23:13:52.418 +05:30 [INF] Executed DbCommand (22ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+IF OBJECT_ID(N'[__EFMigrationsHistory]') IS NULL
+BEGIN
+    CREATE TABLE [__EFMigrationsHistory] (
+        [MigrationId] nvarchar(150) NOT NULL,
+        [ProductVersion] nvarchar(32) NOT NULL,
+        CONSTRAINT [PK___EFMigrationsHistory] PRIMARY KEY ([MigrationId])
+    );
+END;
+2026-05-22 23:13:52.482 +05:30 [INF] Executed DbCommand (1ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT 1
+2026-05-22 23:13:52.495 +05:30 [INF] Executed DbCommand (2ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT OBJECT_ID(N'[__EFMigrationsHistory]');
+2026-05-22 23:13:52.554 +05:30 [INF] Executed DbCommand (44ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT [MigrationId], [ProductVersion]
+FROM [__EFMigrationsHistory]
+ORDER BY [MigrationId];
+2026-05-22 23:13:52.600 +05:30 [INF] No migrations were applied. The database is already up to date.
+2026-05-22 23:13:52.620 +05:30 [INF] Executed DbCommand (11ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+DECLARE @result int;
+EXEC @result = sp_releaseapplock @Resource = '__EFMigrationsLock', @LockOwner = 'Session';
+SELECT @result
+2026-05-22 23:13:53.406 +05:30 [INF] Executed DbCommand (33ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT CASE
+    WHEN EXISTS (
+        SELECT 1
+        FROM [Users] AS [u]
+        WHERE [u].[IsDeleted] = CAST(0 AS bit) AND [u].[Role] = N'Admin') THEN CAST(1 AS bit)
+    ELSE CAST(0 AS bit)
+END
+2026-05-22 23:13:53.428 +05:30 [INF] Admin account already exists. Skipping.
+2026-05-22 23:13:53.453 +05:30 [INF] Executed DbCommand (9ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT CASE
+    WHEN EXISTS (
+        SELECT 1
+        FROM [Users] AS [u]
+        WHERE [u].[IsDeleted] = CAST(0 AS bit) AND [u].[Role] = N'InsuranceAgent') THEN CAST(1 AS bit)
+    ELSE CAST(0 AS bit)
+END
+2026-05-22 23:13:53.460 +05:30 [INF] Agent account already exists. Skipping.
+2026-05-22 23:13:53.463 +05:30 [INF] Database seeding completed.
+2026-05-22 23:14:01.083 +05:30 [WRN] Failed to determine the https port for redirect.
+2026-05-22 23:14:02.007 +05:30 [ERR] Unhandled exception on POST /api/auth/register
+Microsoft.AspNetCore.Server.Kestrel.Core.BadHttpRequestException: Unexpected end of request content.
+   at Microsoft.AspNetCore.Server.Kestrel.Core.Internal.Http.Http1ContentLengthMessageBody.ReadAsyncInternal(CancellationToken cancellationToken)
+   at System.Runtime.CompilerServices.PoolingAsyncValueTaskMethodBuilder`1.StateMachineBox`1.System.Threading.Tasks.Sources.IValueTaskSource<TResult>.GetResult(Int16 token)
+   at System.IO.Pipelines.PipeReader.ReadAtLeastAsyncCore(Int32 minimumSize, CancellationToken cancellationToken)
+   at System.Text.Json.Serialization.PipeReadBufferState.ReadAsync(PipeReader utf8Json, CancellationToken cancellationToken, Boolean fillBuffer)
+   at System.Text.Json.Serialization.Metadata.JsonTypeInfo`1.DeserializeAsync[TReadBufferState,TStream](TStream utf8Json, TReadBufferState bufferState, CancellationToken cancellationToken)
+   at System.Text.Json.Serialization.Metadata.JsonTypeInfo`1.DeserializeAsObjectAsync(PipeReader utf8Json, CancellationToken cancellationToken)
+   at Microsoft.AspNetCore.Mvc.Formatters.SystemTextJsonInputFormatter.ReadRequestBodyAsync(InputFormatterContext context, Encoding encoding)
+   at Microsoft.AspNetCore.Mvc.Formatters.SystemTextJsonInputFormatter.ReadRequestBodyAsync(InputFormatterContext context, Encoding encoding)
+   at Microsoft.AspNetCore.Mvc.ModelBinding.Binders.BodyModelBinder.BindModelAsync(ModelBindingContext bindingContext)
+   at Microsoft.AspNetCore.Mvc.ModelBinding.ParameterBinder.BindModelAsync(ActionContext actionContext, IModelBinder modelBinder, IValueProvider valueProvider, ParameterDescriptor parameter, ModelMetadata metadata, Object value, Object container)
+   at Microsoft.AspNetCore.Mvc.Controllers.ControllerBinderDelegateProvider.<>c__DisplayClass0_0.<<CreateBinderDelegate>g__Bind|0>d.MoveNext()
+--- End of stack trace from previous location ---
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.<InvokeInnerFilterAsync>g__Awaited|13_0(ControllerActionInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeFilterPipelineAsync>g__Awaited|20_0(ResourceInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Awaited|17_0(ResourceInvoker invoker, Task task, IDisposable scope)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Awaited|17_0(ResourceInvoker invoker, Task task, IDisposable scope)
+   at Microsoft.AspNetCore.Authorization.AuthorizationMiddleware.Invoke(HttpContext context)
+   at Microsoft.AspNetCore.Authentication.AuthenticationMiddleware.Invoke(HttpContext context)
+   at Microsoft.AspNetCore.RateLimiting.RateLimitingMiddleware.InvokeInternal(HttpContext context, EnableRateLimitingAttribute enableRateLimitingAttribute)
+   at Authentication.Middleware.RequestLoggingMiddleware.InvokeAsync(HttpContext context) in E:\.Net\Projects\Crop-Insurance-Farmer-Risk-Intelligence-Platform\Crop-Insurance\Backend-Crop-Insurrance\Backend-Crop-Insurrance\Middleware\RequestLoggingMiddleware.cs:line 24
+   at Authentication.Middleware.SecurityHeadersMiddleware.InvokeAsync(HttpContext context) in E:\.Net\Projects\Crop-Insurance-Farmer-Risk-Intelligence-Platform\Crop-Insurance\Backend-Crop-Insurrance\Backend-Crop-Insurrance\Middleware\SecurityHeadersMiddleware.cs:line 48
+   at Authentication.Middleware.GlobalExceptionMiddleware.InvokeAsync(HttpContext context) in E:\.Net\Projects\Crop-Insurance-Farmer-Risk-Intelligence-Platform\Crop-Insurance\Backend-Crop-Insurrance\Backend-Crop-Insurrance\Middleware\GlobalExceptionMiddleware.cs:line 24
+2026-05-22 23:14:10.685 +05:30 [INF] Executed DbCommand (142ms) [Parameters=[@Trim='?' (Size = 150)], CommandType='"Text"', CommandTimeout='30']
+SELECT [u0].[Id], [u0].[CreatedAtUtc], [u0].[Email], [u0].[EmailVerified], [u0].[FullName], [u0].[IsActive], [u0].[IsDeleted], [u0].[LastLoginAtUtc], [u0].[PasswordHash], [u0].[PhoneNumber], [u0].[Role], [u0].[UpdatedAtUtc], [r0].[Id], [r0].[CreatedAtUtc], [r0].[ExpiresAtUtc], [r0].[IsDeleted], [r0].[IsRevoked], [r0].[ReasonRevoked], [r0].[ReplacedByToken], [r0].[RevokedAtUtc], [r0].[Token], [r0].[UpdatedAtUtc], [r0].[UserId]
+FROM (
+    SELECT TOP(1) [u].[Id], [u].[CreatedAtUtc], [u].[Email], [u].[EmailVerified], [u].[FullName], [u].[IsActive], [u].[IsDeleted], [u].[LastLoginAtUtc], [u].[PasswordHash], [u].[PhoneNumber], [u].[Role], [u].[UpdatedAtUtc]
+    FROM [Users] AS [u]
+    WHERE [u].[IsDeleted] = CAST(0 AS bit) AND [u].[Email] = @Trim
+) AS [u0]
+LEFT JOIN (
+    SELECT [r].[Id], [r].[CreatedAtUtc], [r].[ExpiresAtUtc], [r].[IsDeleted], [r].[IsRevoked], [r].[ReasonRevoked], [r].[ReplacedByToken], [r].[RevokedAtUtc], [r].[Token], [r].[UpdatedAtUtc], [r].[UserId]
+    FROM [RefreshTokens] AS [r]
+    WHERE [r].[IsDeleted] = CAST(0 AS bit)
+) AS [r0] ON [u0].[Id] = [r0].[UserId]
+ORDER BY [u0].[Id]
+2026-05-22 23:14:14.344 +05:30 [INF] Executed DbCommand (107ms) [Parameters=[@p0='?' (DbType = Guid), @p1='?' (DbType = DateTime2), @p2='?' (DbType = DateTime2), @p3='?' (DbType = Boolean), @p4='?' (Size = 200), @p5='?' (Size = 256), @p6='?' (DbType = DateTime2), @p7='?' (Size = 256), @p8='?' (DbType = DateTime2), @p9='?' (DbType = Guid), @p12='?' (DbType = Guid), @p10='?' (DbType = DateTime2), @p11='?' (DbType = DateTime2)], CommandType='"Text"', CommandTimeout='30']
+SET NOCOUNT ON;
+INSERT INTO [RefreshTokens] ([Id], [CreatedAtUtc], [ExpiresAtUtc], [IsDeleted], [ReasonRevoked], [ReplacedByToken], [RevokedAtUtc], [Token], [UpdatedAtUtc], [UserId])
+OUTPUT INSERTED.[IsRevoked]
+VALUES (@p0, @p1, @p2, @p3, @p4, @p5, @p6, @p7, @p8, @p9);
+UPDATE [Users] SET [LastLoginAtUtc] = @p10, [UpdatedAtUtc] = @p11
+OUTPUT 1
+WHERE [Id] = @p12;
+2026-05-22 23:14:14.754 +05:30 [INF] POST /api/auth/login → 200 in 5298ms
+2026-05-22 23:16:10.769 +05:30 [WRN] Compiling a query which loads related collections for more than one collection navigation, either via 'Include' or through projection, but no 'QuerySplittingBehavior' has been configured. By default, Entity Framework will use 'QuerySplittingBehavior.SingleQuery', which can potentially result in slow query performance. See https://go.microsoft.com/fwlink/?linkid=2134277 for more information. To identify the query that's triggering this warning call 'ConfigureWarnings(w => w.Throw(RelationalEventId.MultipleCollectionIncludeWarning))'.
+2026-05-22 23:16:11.015 +05:30 [INF] Executed DbCommand (157ms) [Parameters=[@id='?' (DbType = Guid)], CommandType='"Text"', CommandTimeout='30']
+SELECT [s].[Id], [s].[CreatedAtUtc], [s].[Email], [s].[EmailVerified], [s].[FullName], [s].[IsActive], [s].[IsDeleted], [s].[LastLoginAtUtc], [s].[PasswordHash], [s].[PhoneNumber], [s].[Role], [s].[UpdatedAtUtc], [s].[Id0], [s].[AadhaarNumber], [s].[CreatedAtUtc0], [s].[District], [s].[IsDeleted0], [s].[IsKycVerified], [s].[State], [s].[TotalLandAcres], [s].[UpdatedAtUtc0], [s].[UserId], [s].[Village], [s].[Id1], [s0].[Id], [s0].[AreaInAcres], [s0].[CreatedAtUtc], [s0].[FarmName], [s0].[FarmerProfileId], [s0].[IsDeleted], [s0].[Latitude], [s0].[Location], [s0].[Longitude], [s0].[SoilType], [s0].[UpdatedAtUtc], [s0].[Id0], [s0].[CreatedAtUtc0], [s0].[CropName], [s0].[ExpectedHarvestDate], [s0].[ExpectedYieldTons], [s0].[FarmId], [s0].[IsDeleted0], [s0].[Season], [s0].[SowingDate], [s0].[Status], [s0].[UpdatedAtUtc0], [s].[AgentCode], [s].[AssignedDistrict], [s].[CreatedAtUtc1], [s].[IsDeleted1], [s].[IsVerified], [s].[LicenseNumber], [s].[TotalClaimsHandled], [s].[UpdatedAtUtc1], [s].[UserId0]
+FROM (
+    SELECT TOP(1) [u].[Id], [u].[CreatedAtUtc], [u].[Email], [u].[EmailVerified], [u].[FullName], [u].[IsActive], [u].[IsDeleted], [u].[LastLoginAtUtc], [u].[PasswordHash], [u].[PhoneNumber], [u].[Role], [u].[UpdatedAtUtc], [f0].[Id] AS [Id0], [f0].[AadhaarNumber], [f0].[CreatedAtUtc] AS [CreatedAtUtc0], [f0].[District], [f0].[IsDeleted] AS [IsDeleted0], [f0].[IsKycVerified], [f0].[State], [f0].[TotalLandAcres], [f0].[UpdatedAtUtc] AS [UpdatedAtUtc0], [f0].[UserId], [f0].[Village], [a0].[Id] AS [Id1], [a0].[AgentCode], [a0].[AssignedDistrict], [a0].[CreatedAtUtc] AS [CreatedAtUtc1], [a0].[IsDeleted] AS [IsDeleted1], [a0].[IsVerified], [a0].[LicenseNumber], [a0].[TotalClaimsHandled], [a0].[UpdatedAtUtc] AS [UpdatedAtUtc1], [a0].[UserId] AS [UserId0]
+    FROM [Users] AS [u]
+    LEFT JOIN (
+        SELECT [f].[Id], [f].[AadhaarNumber], [f].[CreatedAtUtc], [f].[District], [f].[IsDeleted], [f].[IsKycVerified], [f].[State], [f].[TotalLandAcres], [f].[UpdatedAtUtc], [f].[UserId], [f].[Village]
+        FROM [FarmerProfiles] AS [f]
+        WHERE [f].[IsDeleted] = CAST(0 AS bit)
+    ) AS [f0] ON [u].[Id] = [f0].[UserId]
+    LEFT JOIN (
+        SELECT [a].[Id], [a].[AgentCode], [a].[AssignedDistrict], [a].[CreatedAtUtc], [a].[IsDeleted], [a].[IsVerified], [a].[LicenseNumber], [a].[TotalClaimsHandled], [a].[UpdatedAtUtc], [a].[UserId]
+        FROM [AgentProfiles] AS [a]
+        WHERE [a].[IsDeleted] = CAST(0 AS bit)
+    ) AS [a0] ON [u].[Id] = [a0].[UserId]
+    WHERE [u].[IsDeleted] = CAST(0 AS bit) AND [u].[Id] = @id
+) AS [s]
+LEFT JOIN (
+    SELECT [f1].[Id], [f1].[AreaInAcres], [f1].[CreatedAtUtc], [f1].[FarmName], [f1].[FarmerProfileId], [f1].[IsDeleted], [f1].[Latitude], [f1].[Location], [f1].[Longitude], [f1].[SoilType], [f1].[UpdatedAtUtc], [c0].[Id] AS [Id0], [c0].[CreatedAtUtc] AS [CreatedAtUtc0], [c0].[CropName], [c0].[ExpectedHarvestDate], [c0].[ExpectedYieldTons], [c0].[FarmId], [c0].[IsDeleted] AS [IsDeleted0], [c0].[Season], [c0].[SowingDate], [c0].[Status], [c0].[UpdatedAtUtc] AS [UpdatedAtUtc0]
+    FROM [Farms] AS [f1]
+    LEFT JOIN (
+        SELECT [c].[Id], [c].[CreatedAtUtc], [c].[CropName], [c].[ExpectedHarvestDate], [c].[ExpectedYieldTons], [c].[FarmId], [c].[IsDeleted], [c].[Season], [c].[SowingDate], [c].[Status], [c].[UpdatedAtUtc]
+        FROM [Crops] AS [c]
+        WHERE [c].[IsDeleted] = CAST(0 AS bit)
+    ) AS [c0] ON [f1].[Id] = [c0].[FarmId]
+    WHERE [f1].[IsDeleted] = CAST(0 AS bit)
+) AS [s0] ON [s].[Id0] = [s0].[FarmerProfileId]
+ORDER BY [s].[Id], [s].[Id0], [s].[Id1], [s0].[Id]
+2026-05-22 23:16:11.030 +05:30 [ERR] Unhandled exception on GET /api/farmer/profile
+System.Collections.Generic.KeyNotFoundException: User not found.
+   at Authentication.Services.FarmerService.GetFarmerProfileAsync(Guid userId) in E:\.Net\Projects\Crop-Insurance-Farmer-Risk-Intelligence-Platform\Crop-Insurance\Backend-Crop-Insurrance\Backend-Crop-Insurrance\Services\FarmerService.cs:line 36
+   at Authentication.Controllers.FarmerController.GetFarmerProfile() in E:\.Net\Projects\Crop-Insurance-Farmer-Risk-Intelligence-Platform\Crop-Insurance\Backend-Crop-Insurrance\Backend-Crop-Insurrance\Controllers\FarmerController.cs:line 29
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ActionMethodExecutor.TaskOfIActionResultExecutor.Execute(ActionContext actionContext, IActionResultTypeMapper mapper, ObjectMethodExecutor executor, Object controller, Object[] arguments)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.<InvokeActionMethodAsync>g__Awaited|12_0(ControllerActionInvoker invoker, ValueTask`1 actionResultValueTask)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.<InvokeNextActionFilterAsync>g__Awaited|10_0(ControllerActionInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.Rethrow(ActionExecutedContextSealed context)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.Next(State& next, Scope& scope, Object& state, Boolean& isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.<InvokeInnerFilterAsync>g__Awaited|13_0(ControllerActionInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeFilterPipelineAsync>g__Awaited|20_0(ResourceInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Awaited|17_0(ResourceInvoker invoker, Task task, IDisposable scope)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Awaited|17_0(ResourceInvoker invoker, Task task, IDisposable scope)
+   at Microsoft.AspNetCore.Authorization.AuthorizationMiddleware.Invoke(HttpContext context)
+   at Microsoft.AspNetCore.Authentication.AuthenticationMiddleware.Invoke(HttpContext context)
+   at Authentication.Middleware.RequestLoggingMiddleware.InvokeAsync(HttpContext context) in E:\.Net\Projects\Crop-Insurance-Farmer-Risk-Intelligence-Platform\Crop-Insurance\Backend-Crop-Insurrance\Backend-Crop-Insurrance\Middleware\RequestLoggingMiddleware.cs:line 24
+   at Authentication.Middleware.SecurityHeadersMiddleware.InvokeAsync(HttpContext context) in E:\.Net\Projects\Crop-Insurance-Farmer-Risk-Intelligence-Platform\Crop-Insurance\Backend-Crop-Insurrance\Backend-Crop-Insurrance\Middleware\SecurityHeadersMiddleware.cs:line 48
+   at Authentication.Middleware.GlobalExceptionMiddleware.InvokeAsync(HttpContext context) in E:\.Net\Projects\Crop-Insurance-Farmer-Risk-Intelligence-Platform\Crop-Insurance\Backend-Crop-Insurrance\Backend-Crop-Insurrance\Middleware\GlobalExceptionMiddleware.cs:line 24
+2026-05-22 23:18:30.524 +05:30 [INF] Executed DbCommand (78ms) [Parameters=[@Trim='?' (Size = 150)], CommandType='"Text"', CommandTimeout='30']
+SELECT [u0].[Id], [u0].[CreatedAtUtc], [u0].[Email], [u0].[EmailVerified], [u0].[FullName], [u0].[IsActive], [u0].[IsDeleted], [u0].[LastLoginAtUtc], [u0].[PasswordHash], [u0].[PhoneNumber], [u0].[Role], [u0].[UpdatedAtUtc], [r0].[Id], [r0].[CreatedAtUtc], [r0].[ExpiresAtUtc], [r0].[IsDeleted], [r0].[IsRevoked], [r0].[ReasonRevoked], [r0].[ReplacedByToken], [r0].[RevokedAtUtc], [r0].[Token], [r0].[UpdatedAtUtc], [r0].[UserId]
+FROM (
+    SELECT TOP(1) [u].[Id], [u].[CreatedAtUtc], [u].[Email], [u].[EmailVerified], [u].[FullName], [u].[IsActive], [u].[IsDeleted], [u].[LastLoginAtUtc], [u].[PasswordHash], [u].[PhoneNumber], [u].[Role], [u].[UpdatedAtUtc]
+    FROM [Users] AS [u]
+    WHERE [u].[IsDeleted] = CAST(0 AS bit) AND [u].[Email] = @Trim
+) AS [u0]
+LEFT JOIN (
+    SELECT [r].[Id], [r].[CreatedAtUtc], [r].[ExpiresAtUtc], [r].[IsDeleted], [r].[IsRevoked], [r].[ReasonRevoked], [r].[ReplacedByToken], [r].[RevokedAtUtc], [r].[Token], [r].[UpdatedAtUtc], [r].[UserId]
+    FROM [RefreshTokens] AS [r]
+    WHERE [r].[IsDeleted] = CAST(0 AS bit)
+) AS [r0] ON [u0].[Id] = [r0].[UserId]
+ORDER BY [u0].[Id]
+2026-05-22 23:18:31.578 +05:30 [INF] Executed DbCommand (77ms) [Parameters=[@p0='?' (DbType = Guid), @p1='?' (DbType = DateTime2), @p2='?' (DbType = DateTime2), @p3='?' (DbType = Boolean), @p4='?' (Size = 200), @p5='?' (Size = 256), @p6='?' (DbType = DateTime2), @p7='?' (Size = 256), @p8='?' (DbType = DateTime2), @p9='?' (DbType = Guid), @p12='?' (DbType = Guid), @p10='?' (DbType = DateTime2), @p11='?' (DbType = DateTime2)], CommandType='"Text"', CommandTimeout='30']
+SET NOCOUNT ON;
+INSERT INTO [RefreshTokens] ([Id], [CreatedAtUtc], [ExpiresAtUtc], [IsDeleted], [ReasonRevoked], [ReplacedByToken], [RevokedAtUtc], [Token], [UpdatedAtUtc], [UserId])
+OUTPUT INSERTED.[IsRevoked]
+VALUES (@p0, @p1, @p2, @p3, @p4, @p5, @p6, @p7, @p8, @p9);
+UPDATE [Users] SET [LastLoginAtUtc] = @p10, [UpdatedAtUtc] = @p11
+OUTPUT 1
+WHERE [Id] = @p12;
+2026-05-22 23:18:31.612 +05:30 [INF] POST /api/auth/login → 200 in 1189ms
+2026-05-22 23:19:07.124 +05:30 [INF] Executed DbCommand (231ms) [Parameters=[@id='?' (DbType = Guid)], CommandType='"Text"', CommandTimeout='30']
+SELECT [s].[Id], [s].[CreatedAtUtc], [s].[Email], [s].[EmailVerified], [s].[FullName], [s].[IsActive], [s].[IsDeleted], [s].[LastLoginAtUtc], [s].[PasswordHash], [s].[PhoneNumber], [s].[Role], [s].[UpdatedAtUtc], [s].[Id0], [s].[AadhaarNumber], [s].[CreatedAtUtc0], [s].[District], [s].[IsDeleted0], [s].[IsKycVerified], [s].[State], [s].[TotalLandAcres], [s].[UpdatedAtUtc0], [s].[UserId], [s].[Village], [s].[Id1], [s0].[Id], [s0].[AreaInAcres], [s0].[CreatedAtUtc], [s0].[FarmName], [s0].[FarmerProfileId], [s0].[IsDeleted], [s0].[Latitude], [s0].[Location], [s0].[Longitude], [s0].[SoilType], [s0].[UpdatedAtUtc], [s0].[Id0], [s0].[CreatedAtUtc0], [s0].[CropName], [s0].[ExpectedHarvestDate], [s0].[ExpectedYieldTons], [s0].[FarmId], [s0].[IsDeleted0], [s0].[Season], [s0].[SowingDate], [s0].[Status], [s0].[UpdatedAtUtc0], [s].[AgentCode], [s].[AssignedDistrict], [s].[CreatedAtUtc1], [s].[IsDeleted1], [s].[IsVerified], [s].[LicenseNumber], [s].[TotalClaimsHandled], [s].[UpdatedAtUtc1], [s].[UserId0]
+FROM (
+    SELECT TOP(1) [u].[Id], [u].[CreatedAtUtc], [u].[Email], [u].[EmailVerified], [u].[FullName], [u].[IsActive], [u].[IsDeleted], [u].[LastLoginAtUtc], [u].[PasswordHash], [u].[PhoneNumber], [u].[Role], [u].[UpdatedAtUtc], [f0].[Id] AS [Id0], [f0].[AadhaarNumber], [f0].[CreatedAtUtc] AS [CreatedAtUtc0], [f0].[District], [f0].[IsDeleted] AS [IsDeleted0], [f0].[IsKycVerified], [f0].[State], [f0].[TotalLandAcres], [f0].[UpdatedAtUtc] AS [UpdatedAtUtc0], [f0].[UserId], [f0].[Village], [a0].[Id] AS [Id1], [a0].[AgentCode], [a0].[AssignedDistrict], [a0].[CreatedAtUtc] AS [CreatedAtUtc1], [a0].[IsDeleted] AS [IsDeleted1], [a0].[IsVerified], [a0].[LicenseNumber], [a0].[TotalClaimsHandled], [a0].[UpdatedAtUtc] AS [UpdatedAtUtc1], [a0].[UserId] AS [UserId0]
+    FROM [Users] AS [u]
+    LEFT JOIN (
+        SELECT [f].[Id], [f].[AadhaarNumber], [f].[CreatedAtUtc], [f].[District], [f].[IsDeleted], [f].[IsKycVerified], [f].[State], [f].[TotalLandAcres], [f].[UpdatedAtUtc], [f].[UserId], [f].[Village]
+        FROM [FarmerProfiles] AS [f]
+        WHERE [f].[IsDeleted] = CAST(0 AS bit)
+    ) AS [f0] ON [u].[Id] = [f0].[UserId]
+    LEFT JOIN (
+        SELECT [a].[Id], [a].[AgentCode], [a].[AssignedDistrict], [a].[CreatedAtUtc], [a].[IsDeleted], [a].[IsVerified], [a].[LicenseNumber], [a].[TotalClaimsHandled], [a].[UpdatedAtUtc], [a].[UserId]
+        FROM [AgentProfiles] AS [a]
+        WHERE [a].[IsDeleted] = CAST(0 AS bit)
+    ) AS [a0] ON [u].[Id] = [a0].[UserId]
+    WHERE [u].[IsDeleted] = CAST(0 AS bit) AND [u].[Id] = @id
+) AS [s]
+LEFT JOIN (
+    SELECT [f1].[Id], [f1].[AreaInAcres], [f1].[CreatedAtUtc], [f1].[FarmName], [f1].[FarmerProfileId], [f1].[IsDeleted], [f1].[Latitude], [f1].[Location], [f1].[Longitude], [f1].[SoilType], [f1].[UpdatedAtUtc], [c0].[Id] AS [Id0], [c0].[CreatedAtUtc] AS [CreatedAtUtc0], [c0].[CropName], [c0].[ExpectedHarvestDate], [c0].[ExpectedYieldTons], [c0].[FarmId], [c0].[IsDeleted] AS [IsDeleted0], [c0].[Season], [c0].[SowingDate], [c0].[Status], [c0].[UpdatedAtUtc] AS [UpdatedAtUtc0]
+    FROM [Farms] AS [f1]
+    LEFT JOIN (
+        SELECT [c].[Id], [c].[CreatedAtUtc], [c].[CropName], [c].[ExpectedHarvestDate], [c].[ExpectedYieldTons], [c].[FarmId], [c].[IsDeleted], [c].[Season], [c].[SowingDate], [c].[Status], [c].[UpdatedAtUtc]
+        FROM [Crops] AS [c]
+        WHERE [c].[IsDeleted] = CAST(0 AS bit)
+    ) AS [c0] ON [f1].[Id] = [c0].[FarmId]
+    WHERE [f1].[IsDeleted] = CAST(0 AS bit)
+) AS [s0] ON [s].[Id0] = [s0].[FarmerProfileId]
+ORDER BY [s].[Id], [s].[Id0], [s].[Id1], [s0].[Id]
+2026-05-22 23:19:07.150 +05:30 [ERR] Unhandled exception on GET /api/farmer/profile
+System.Collections.Generic.KeyNotFoundException: User not found.
+   at Authentication.Services.FarmerService.GetFarmerProfileAsync(Guid userId) in E:\.Net\Projects\Crop-Insurance-Farmer-Risk-Intelligence-Platform\Crop-Insurance\Backend-Crop-Insurrance\Backend-Crop-Insurrance\Services\FarmerService.cs:line 36
+   at Authentication.Controllers.FarmerController.GetFarmerProfile() in E:\.Net\Projects\Crop-Insurance-Farmer-Risk-Intelligence-Platform\Crop-Insurance\Backend-Crop-Insurrance\Backend-Crop-Insurrance\Controllers\FarmerController.cs:line 29
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ActionMethodExecutor.TaskOfIActionResultExecutor.Execute(ActionContext actionContext, IActionResultTypeMapper mapper, ObjectMethodExecutor executor, Object controller, Object[] arguments)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.<InvokeActionMethodAsync>g__Awaited|12_0(ControllerActionInvoker invoker, ValueTask`1 actionResultValueTask)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.<InvokeNextActionFilterAsync>g__Awaited|10_0(ControllerActionInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.Rethrow(ActionExecutedContextSealed context)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.Next(State& next, Scope& scope, Object& state, Boolean& isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.<InvokeInnerFilterAsync>g__Awaited|13_0(ControllerActionInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeFilterPipelineAsync>g__Awaited|20_0(ResourceInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Awaited|17_0(ResourceInvoker invoker, Task task, IDisposable scope)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Awaited|17_0(ResourceInvoker invoker, Task task, IDisposable scope)
+   at Microsoft.AspNetCore.Authorization.AuthorizationMiddleware.Invoke(HttpContext context)
+   at Microsoft.AspNetCore.Authentication.AuthenticationMiddleware.Invoke(HttpContext context)
+   at Authentication.Middleware.RequestLoggingMiddleware.InvokeAsync(HttpContext context) in E:\.Net\Projects\Crop-Insurance-Farmer-Risk-Intelligence-Platform\Crop-Insurance\Backend-Crop-Insurrance\Backend-Crop-Insurrance\Middleware\RequestLoggingMiddleware.cs:line 24
+   at Authentication.Middleware.SecurityHeadersMiddleware.InvokeAsync(HttpContext context) in E:\.Net\Projects\Crop-Insurance-Farmer-Risk-Intelligence-Platform\Crop-Insurance\Backend-Crop-Insurrance\Backend-Crop-Insurrance\Middleware\SecurityHeadersMiddleware.cs:line 48
+   at Authentication.Middleware.GlobalExceptionMiddleware.InvokeAsync(HttpContext context) in E:\.Net\Projects\Crop-Insurance-Farmer-Risk-Intelligence-Platform\Crop-Insurance\Backend-Crop-Insurrance\Backend-Crop-Insurrance\Middleware\GlobalExceptionMiddleware.cs:line 24
+2026-05-22 23:36:42.714 +05:30 [INF] Executed DbCommand (62ms) [Parameters=[@Trim='?' (Size = 150)], CommandType='"Text"', CommandTimeout='30']
+SELECT [u0].[Id], [u0].[CreatedAtUtc], [u0].[Email], [u0].[EmailVerified], [u0].[FullName], [u0].[IsActive], [u0].[IsDeleted], [u0].[LastLoginAtUtc], [u0].[PasswordHash], [u0].[PhoneNumber], [u0].[Role], [u0].[UpdatedAtUtc], [r0].[Id], [r0].[CreatedAtUtc], [r0].[ExpiresAtUtc], [r0].[IsDeleted], [r0].[IsRevoked], [r0].[ReasonRevoked], [r0].[ReplacedByToken], [r0].[RevokedAtUtc], [r0].[Token], [r0].[UpdatedAtUtc], [r0].[UserId]
+FROM (
+    SELECT TOP(1) [u].[Id], [u].[CreatedAtUtc], [u].[Email], [u].[EmailVerified], [u].[FullName], [u].[IsActive], [u].[IsDeleted], [u].[LastLoginAtUtc], [u].[PasswordHash], [u].[PhoneNumber], [u].[Role], [u].[UpdatedAtUtc]
+    FROM [Users] AS [u]
+    WHERE [u].[IsDeleted] = CAST(0 AS bit) AND [u].[Email] = @Trim
+) AS [u0]
+LEFT JOIN (
+    SELECT [r].[Id], [r].[CreatedAtUtc], [r].[ExpiresAtUtc], [r].[IsDeleted], [r].[IsRevoked], [r].[ReasonRevoked], [r].[ReplacedByToken], [r].[RevokedAtUtc], [r].[Token], [r].[UpdatedAtUtc], [r].[UserId]
+    FROM [RefreshTokens] AS [r]
+    WHERE [r].[IsDeleted] = CAST(0 AS bit)
+) AS [r0] ON [u0].[Id] = [r0].[UserId]
+ORDER BY [u0].[Id]
+2026-05-22 23:36:43.677 +05:30 [INF] Executed DbCommand (21ms) [Parameters=[@p0='?' (DbType = Guid), @p1='?' (DbType = DateTime2), @p2='?' (DbType = DateTime2), @p3='?' (DbType = Boolean), @p4='?' (Size = 200), @p5='?' (Size = 256), @p6='?' (DbType = DateTime2), @p7='?' (Size = 256), @p8='?' (DbType = DateTime2), @p9='?' (DbType = Guid), @p12='?' (DbType = Guid), @p10='?' (DbType = DateTime2), @p11='?' (DbType = DateTime2)], CommandType='"Text"', CommandTimeout='30']
+SET NOCOUNT ON;
+INSERT INTO [RefreshTokens] ([Id], [CreatedAtUtc], [ExpiresAtUtc], [IsDeleted], [ReasonRevoked], [ReplacedByToken], [RevokedAtUtc], [Token], [UpdatedAtUtc], [UserId])
+OUTPUT INSERTED.[IsRevoked]
+VALUES (@p0, @p1, @p2, @p3, @p4, @p5, @p6, @p7, @p8, @p9);
+UPDATE [Users] SET [LastLoginAtUtc] = @p10, [UpdatedAtUtc] = @p11
+OUTPUT 1
+WHERE [Id] = @p12;
+2026-05-22 23:36:43.709 +05:30 [INF] POST /api/auth/login → 200 in 1348ms
+2026-05-22 23:37:47.998 +05:30 [WRN] GET /api/user/debug-claim → 404 in 10ms
+2026-05-22 23:38:30.905 +05:30 [INF] Executed DbCommand (218ms) [Parameters=[@id='?' (DbType = Guid)], CommandType='"Text"', CommandTimeout='30']
+SELECT [s].[Id], [s].[CreatedAtUtc], [s].[Email], [s].[EmailVerified], [s].[FullName], [s].[IsActive], [s].[IsDeleted], [s].[LastLoginAtUtc], [s].[PasswordHash], [s].[PhoneNumber], [s].[Role], [s].[UpdatedAtUtc], [s].[Id0], [s].[AadhaarNumber], [s].[CreatedAtUtc0], [s].[District], [s].[IsDeleted0], [s].[IsKycVerified], [s].[State], [s].[TotalLandAcres], [s].[UpdatedAtUtc0], [s].[UserId], [s].[Village], [s].[Id1], [s0].[Id], [s0].[AreaInAcres], [s0].[CreatedAtUtc], [s0].[FarmName], [s0].[FarmerProfileId], [s0].[IsDeleted], [s0].[Latitude], [s0].[Location], [s0].[Longitude], [s0].[SoilType], [s0].[UpdatedAtUtc], [s0].[Id0], [s0].[CreatedAtUtc0], [s0].[CropName], [s0].[ExpectedHarvestDate], [s0].[ExpectedYieldTons], [s0].[FarmId], [s0].[IsDeleted0], [s0].[Season], [s0].[SowingDate], [s0].[Status], [s0].[UpdatedAtUtc0], [s].[AgentCode], [s].[AssignedDistrict], [s].[CreatedAtUtc1], [s].[IsDeleted1], [s].[IsVerified], [s].[LicenseNumber], [s].[TotalClaimsHandled], [s].[UpdatedAtUtc1], [s].[UserId0]
+FROM (
+    SELECT TOP(1) [u].[Id], [u].[CreatedAtUtc], [u].[Email], [u].[EmailVerified], [u].[FullName], [u].[IsActive], [u].[IsDeleted], [u].[LastLoginAtUtc], [u].[PasswordHash], [u].[PhoneNumber], [u].[Role], [u].[UpdatedAtUtc], [f0].[Id] AS [Id0], [f0].[AadhaarNumber], [f0].[CreatedAtUtc] AS [CreatedAtUtc0], [f0].[District], [f0].[IsDeleted] AS [IsDeleted0], [f0].[IsKycVerified], [f0].[State], [f0].[TotalLandAcres], [f0].[UpdatedAtUtc] AS [UpdatedAtUtc0], [f0].[UserId], [f0].[Village], [a0].[Id] AS [Id1], [a0].[AgentCode], [a0].[AssignedDistrict], [a0].[CreatedAtUtc] AS [CreatedAtUtc1], [a0].[IsDeleted] AS [IsDeleted1], [a0].[IsVerified], [a0].[LicenseNumber], [a0].[TotalClaimsHandled], [a0].[UpdatedAtUtc] AS [UpdatedAtUtc1], [a0].[UserId] AS [UserId0]
+    FROM [Users] AS [u]
+    LEFT JOIN (
+        SELECT [f].[Id], [f].[AadhaarNumber], [f].[CreatedAtUtc], [f].[District], [f].[IsDeleted], [f].[IsKycVerified], [f].[State], [f].[TotalLandAcres], [f].[UpdatedAtUtc], [f].[UserId], [f].[Village]
+        FROM [FarmerProfiles] AS [f]
+        WHERE [f].[IsDeleted] = CAST(0 AS bit)
+    ) AS [f0] ON [u].[Id] = [f0].[UserId]
+    LEFT JOIN (
+        SELECT [a].[Id], [a].[AgentCode], [a].[AssignedDistrict], [a].[CreatedAtUtc], [a].[IsDeleted], [a].[IsVerified], [a].[LicenseNumber], [a].[TotalClaimsHandled], [a].[UpdatedAtUtc], [a].[UserId]
+        FROM [AgentProfiles] AS [a]
+        WHERE [a].[IsDeleted] = CAST(0 AS bit)
+    ) AS [a0] ON [u].[Id] = [a0].[UserId]
+    WHERE [u].[IsDeleted] = CAST(0 AS bit) AND [u].[Id] = @id
+) AS [s]
+LEFT JOIN (
+    SELECT [f1].[Id], [f1].[AreaInAcres], [f1].[CreatedAtUtc], [f1].[FarmName], [f1].[FarmerProfileId], [f1].[IsDeleted], [f1].[Latitude], [f1].[Location], [f1].[Longitude], [f1].[SoilType], [f1].[UpdatedAtUtc], [c0].[Id] AS [Id0], [c0].[CreatedAtUtc] AS [CreatedAtUtc0], [c0].[CropName], [c0].[ExpectedHarvestDate], [c0].[ExpectedYieldTons], [c0].[FarmId], [c0].[IsDeleted] AS [IsDeleted0], [c0].[Season], [c0].[SowingDate], [c0].[Status], [c0].[UpdatedAtUtc] AS [UpdatedAtUtc0]
+    FROM [Farms] AS [f1]
+    LEFT JOIN (
+        SELECT [c].[Id], [c].[CreatedAtUtc], [c].[CropName], [c].[ExpectedHarvestDate], [c].[ExpectedYieldTons], [c].[FarmId], [c].[IsDeleted], [c].[Season], [c].[SowingDate], [c].[Status], [c].[UpdatedAtUtc]
+        FROM [Crops] AS [c]
+        WHERE [c].[IsDeleted] = CAST(0 AS bit)
+    ) AS [c0] ON [f1].[Id] = [c0].[FarmId]
+    WHERE [f1].[IsDeleted] = CAST(0 AS bit)
+) AS [s0] ON [s].[Id0] = [s0].[FarmerProfileId]
+ORDER BY [s].[Id], [s].[Id0], [s].[Id1], [s0].[Id]
+2026-05-22 23:38:30.941 +05:30 [ERR] Unhandled exception on GET /api/farmer/profile
+System.Collections.Generic.KeyNotFoundException: User not found.
+   at Authentication.Services.FarmerService.GetFarmerProfileAsync(Guid userId) in E:\.Net\Projects\Crop-Insurance-Farmer-Risk-Intelligence-Platform\Crop-Insurance\Backend-Crop-Insurrance\Backend-Crop-Insurrance\Services\FarmerService.cs:line 36
+   at Authentication.Controllers.FarmerController.GetFarmerProfile() in E:\.Net\Projects\Crop-Insurance-Farmer-Risk-Intelligence-Platform\Crop-Insurance\Backend-Crop-Insurrance\Backend-Crop-Insurrance\Controllers\FarmerController.cs:line 29
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ActionMethodExecutor.TaskOfIActionResultExecutor.Execute(ActionContext actionContext, IActionResultTypeMapper mapper, ObjectMethodExecutor executor, Object controller, Object[] arguments)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.<InvokeActionMethodAsync>g__Awaited|12_0(ControllerActionInvoker invoker, ValueTask`1 actionResultValueTask)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.<InvokeNextActionFilterAsync>g__Awaited|10_0(ControllerActionInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.Rethrow(ActionExecutedContextSealed context)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.Next(State& next, Scope& scope, Object& state, Boolean& isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.<InvokeInnerFilterAsync>g__Awaited|13_0(ControllerActionInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeFilterPipelineAsync>g__Awaited|20_0(ResourceInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Awaited|17_0(ResourceInvoker invoker, Task task, IDisposable scope)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Awaited|17_0(ResourceInvoker invoker, Task task, IDisposable scope)
+   at Microsoft.AspNetCore.Authorization.AuthorizationMiddleware.Invoke(HttpContext context)
+   at Microsoft.AspNetCore.Authentication.AuthenticationMiddleware.Invoke(HttpContext context)
+   at Authentication.Middleware.RequestLoggingMiddleware.InvokeAsync(HttpContext context) in E:\.Net\Projects\Crop-Insurance-Farmer-Risk-Intelligence-Platform\Crop-Insurance\Backend-Crop-Insurrance\Backend-Crop-Insurrance\Middleware\RequestLoggingMiddleware.cs:line 24
+   at Authentication.Middleware.SecurityHeadersMiddleware.InvokeAsync(HttpContext context) in E:\.Net\Projects\Crop-Insurance-Farmer-Risk-Intelligence-Platform\Crop-Insurance\Backend-Crop-Insurrance\Backend-Crop-Insurrance\Middleware\SecurityHeadersMiddleware.cs:line 48
+   at Authentication.Middleware.GlobalExceptionMiddleware.InvokeAsync(HttpContext context) in E:\.Net\Projects\Crop-Insurance-Farmer-Risk-Intelligence-Platform\Crop-Insurance\Backend-Crop-Insurrance\Backend-Crop-Insurrance\Middleware\GlobalExceptionMiddleware.cs:line 24

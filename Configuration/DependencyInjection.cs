@@ -23,9 +23,17 @@ public static class DependencyInjection
         services.Configure<JwtSettings>(
             configuration.GetSection("JwtSettings"));
 
+        // ── Cookie Settings ────────────────────────────────────────────────
+        services.Configure<CookieSettings>(
+            configuration.GetSection("CookieSettings"));
+
         var jwtSettings = configuration
             .GetSection("JwtSettings")
             .Get<JwtSettings>()!;
+
+        var cookieSettings = configuration
+            .GetSection("CookieSettings")
+            .Get<CookieSettings>()!;
 
         // ── CORS ───────────────────────────────────────────────────────────
         var allowedOrigins = configuration
@@ -40,35 +48,29 @@ public static class DependencyInjection
                     .WithOrigins(allowedOrigins)
                     .AllowAnyHeader()
                     .AllowAnyMethod()
-                    .AllowCredentials();
+                    .AllowCredentials(); // Required for cookies
             });
         });
 
         // ── Rate Limiting ──────────────────────────────────────────────────
-        // Auth endpoints get stricter limits — 10 requests per 60 seconds
         services.AddRateLimiter(options =>
         {
-            // Global policy for all endpoints
             options.AddFixedWindowLimiter("GlobalPolicy", opt =>
             {
                 opt.PermitLimit = 100;
                 opt.Window = TimeSpan.FromSeconds(60);
-                opt.QueueProcessingOrder =
-                    QueueProcessingOrder.OldestFirst;
+                opt.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
                 opt.QueueLimit = 5;
             });
 
-            // Strict policy for auth endpoints
             options.AddFixedWindowLimiter("AuthPolicy", opt =>
             {
                 opt.PermitLimit = 10;
                 opt.Window = TimeSpan.FromSeconds(60);
-                opt.QueueProcessingOrder =
-                    QueueProcessingOrder.OldestFirst;
+                opt.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
                 opt.QueueLimit = 2;
             });
 
-            // Return 429 JSON on rate limit exceeded
             options.OnRejected = async (context, cancellationToken) =>
             {
                 context.HttpContext.Response.StatusCode = 429;
@@ -79,7 +81,7 @@ public static class DependencyInjection
             };
         });
 
-        // ── Authentication ─────────────────────────────────────────────────
+        // ── Authentication — read JWT from HttpOnly cookie ─────────────────
         services
             .AddAuthentication(options =>
             {
@@ -104,16 +106,35 @@ public static class DependencyInjection
                             Encoding.UTF8.GetBytes(jwtSettings.SecretKey))
                     };
 
+                // ── Read token from cookie instead of Authorization header ──
+                // This is the key change — JWT middleware reads cookie
                 options.Events = new JwtBearerEvents
                 {
+                    OnMessageReceived = context =>
+                    {
+                        // Read access token from HttpOnly cookie
+                        var accessToken = context.Request.Cookies
+                            .TryGetValue(
+                                cookieSettings.AccessTokenCookieName,
+                                out var token)
+                            ? token
+                            : null;
+
+                        if (!string.IsNullOrEmpty(accessToken))
+                            context.Token = accessToken;
+
+                        return Task.CompletedTask;
+                    },
+
                     OnChallenge = async context =>
                     {
                         context.HandleResponse();
                         context.Response.StatusCode = 401;
                         context.Response.ContentType = "application/json";
                         await context.Response.WriteAsync(
-                            """{"success":false,"message":"Unauthorized."}""");
+                            """{"success":false,"message":"Unauthorized. Please login."}""");
                     },
+
                     OnForbidden = async context =>
                     {
                         context.Response.StatusCode = 403;
@@ -145,9 +166,10 @@ public static class DependencyInjection
         services.AddScoped<IFarmerService, FarmerService>();
         services.AddScoped<IAgentService, AgentService>();
 
-        // ── HTTP Context ───────────────────────────────────────────────────
+        // ── HTTP Context + Cookie Helper ───────────────────────────────────
         services.AddHttpContextAccessor();
         services.AddScoped<ICurrentUserService, CurrentUserService>();
+        services.AddScoped<CookieHelper>();  // ← registered here
 
         // ── AutoMapper ─────────────────────────────────────────────────────
         services.AddAutoMapper(typeof(AutoMapperProfile));
