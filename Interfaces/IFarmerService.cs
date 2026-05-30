@@ -4,12 +4,26 @@ namespace Authentication.Interfaces;
 
 public interface IFarmerService
 {
+    // ── Existing ───────────────────────────────────────────────────────────
     Task<FarmerProfileDto> GetFarmerProfileAsync(Guid userId);
-    Task<FarmerProfileDto> UpdateFarmerProfileAsync(Guid userId, UpdateFarmerProfileRequestDto request);
+    Task<FarmerProfileDto> UpdateFarmerProfileAsync(
+        Guid userId, UpdateFarmerProfileRequestDto request);
     Task<FarmDto> AddFarmAsync(Guid userId, AddFarmRequestDto request);
     Task<IEnumerable<FarmDto>> GetFarmsAsync(Guid userId);
-    Task<FarmDto> UpdateFarmAsync(Guid userId, Guid farmId, AddFarmRequestDto request);
+    Task<FarmDto> UpdateFarmAsync(
+        Guid userId, Guid farmId, AddFarmRequestDto request);
     Task<bool> DeleteFarmAsync(Guid userId, Guid farmId);
-    Task<CropDto> AddCropAsync(Guid userId, Guid farmId, AddCropRequestDto request);
+    Task<CropDto> AddCropAsync(
+        Guid userId, Guid farmId, AddCropRequestDto request);
     Task<IEnumerable<CropDto>> GetCropsAsync(Guid farmId);
+
+    // ── Claims ─────────────────────────────────────────────────────────────
+    Task<FarmerClaimDetailDto> SubmitClaimAsync(
+        Guid userId, SubmitClaimRequestDto request);
+    Task<IEnumerable<FarmerClaimSummaryDto>> GetMyClaimsAsync(Guid userId);
+    Task<FarmerClaimDetailDto> GetClaimDetailAsync(
+        Guid userId, Guid claimId);
+    Task<ClaimStatusDto> GetClaimStatusAsync(
+        Guid userId, Guid claimId);
+    Task<bool> CancelClaimAsync(Guid userId, Guid claimId);
 }

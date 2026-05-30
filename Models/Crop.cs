@@ -14,4 +14,8 @@ public class Crop : BaseEntity
     // FK
     public Guid FarmId { get; set; }
     public Farm Farm { get; set; } = default!;
+
+    // Navigation
+    public ICollection<InsuranceClaim> Claims { get; set; }
+    = new List<InsuranceClaim>();
 }

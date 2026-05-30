@@ -8,7 +8,7 @@ namespace Authentication.Controllers;
 
 [ApiController]
 [Route("api/farmer")]
-[Authorize(Roles = "Farmer")]  // Farmer role only
+[Authorize(Roles = "Farmer")]
 public class FarmerController : ControllerBase
 {
     private readonly IFarmerService _farmerService;
@@ -21,6 +21,10 @@ public class FarmerController : ControllerBase
         _farmerService = farmerService;
         _currentUserService = currentUserService;
     }
+
+    // ══════════════════════════════════════════════════════════════════════
+    // PROFILE
+    // ══════════════════════════════════════════════════════════════════════
 
     // ─── GET api/farmer/profile ────────────────────────────────────────────
     [HttpGet("profile")]
@@ -41,9 +45,12 @@ public class FarmerController : ControllerBase
             .UpdateFarmerProfileAsync(_currentUserService.UserId, request);
 
         return Ok(ApiResponse<FarmerProfileDto>.Ok(
-            result,
-            "Farmer profile updated successfully."));
+            result, "Farmer profile updated successfully."));
     }
+
+    // ══════════════════════════════════════════════════════════════════════
+    // FARMS
+    // ══════════════════════════════════════════════════════════════════════
 
     // ─── GET api/farmer/farms ──────────────────────────────────────────────
     [HttpGet("farms")]
@@ -77,9 +84,7 @@ public class FarmerController : ControllerBase
         var result = await _farmerService
             .UpdateFarmAsync(_currentUserService.UserId, farmId, request);
 
-        return Ok(ApiResponse<FarmDto>.Ok(
-            result,
-            "Farm updated successfully."));
+        return Ok(ApiResponse<FarmDto>.Ok(result, "Farm updated successfully."));
     }
 
     // ─── DELETE api/farmer/farms/{farmId} ──────────────────────────────────
@@ -89,10 +94,12 @@ public class FarmerController : ControllerBase
         await _farmerService
             .DeleteFarmAsync(_currentUserService.UserId, farmId);
 
-        return Ok(ApiResponse<object>.Ok(
-            null!,
-            "Farm deleted successfully."));
+        return Ok(ApiResponse<object>.Ok(null!, "Farm deleted successfully."));
     }
+
+    // ══════════════════════════════════════════════════════════════════════
+    // CROPS
+    // ══════════════════════════════════════════════════════════════════════
 
     // ─── GET api/farmer/farms/{farmId}/crops ───────────────────────────────
     [HttpGet("farms/{farmId:guid}/crops")]
@@ -115,5 +122,64 @@ public class FarmerController : ControllerBase
         return Created(
             $"api/farmer/farms/{farmId}/crops/{result.Id}",
             ApiResponse<CropDto>.Ok(result, "Crop added successfully."));
+    }
+
+    // ══════════════════════════════════════════════════════════════════════
+    // CLAIMS
+    // ══════════════════════════════════════════════════════════════════════
+
+    // ─── POST api/farmer/claims ────────────────────────────────────────────
+    [HttpPost("claims")]
+    public async Task<IActionResult> SubmitClaim(
+        [FromBody] SubmitClaimRequestDto request)
+    {
+        var result = await _farmerService
+            .SubmitClaimAsync(_currentUserService.UserId, request);
+
+        return Created(
+            $"api/farmer/claims/{result.Id}",
+            ApiResponse<FarmerClaimDetailDto>.Ok(
+                result, "Claim submitted successfully."));
+    }
+
+    // ─── GET api/farmer/claims ─────────────────────────────────────────────
+    [HttpGet("claims")]
+    public async Task<IActionResult> GetMyClaims()
+    {
+        var result = await _farmerService
+            .GetMyClaimsAsync(_currentUserService.UserId);
+
+        return Ok(ApiResponse<IEnumerable<FarmerClaimSummaryDto>>.Ok(result));
+    }
+
+    // ─── GET api/farmer/claims/{claimId} ───────────────────────────────────
+    [HttpGet("claims/{claimId:guid}")]
+    public async Task<IActionResult> GetClaimDetail(Guid claimId)
+    {
+        var result = await _farmerService
+            .GetClaimDetailAsync(_currentUserService.UserId, claimId);
+
+        return Ok(ApiResponse<FarmerClaimDetailDto>.Ok(result));
+    }
+
+    // ─── GET api/farmer/claims/{claimId}/status ────────────────────────────
+    [HttpGet("claims/{claimId:guid}/status")]
+    public async Task<IActionResult> GetClaimStatus(Guid claimId)
+    {
+        var result = await _farmerService
+            .GetClaimStatusAsync(_currentUserService.UserId, claimId);
+
+        return Ok(ApiResponse<ClaimStatusDto>.Ok(result));
+    }
+
+    // ─── PUT api/farmer/claims/{claimId}/cancel ────────────────────────────
+    [HttpPut("claims/{claimId:guid}/cancel")]
+    public async Task<IActionResult> CancelClaim(Guid claimId)
+    {
+        await _farmerService
+            .CancelClaimAsync(_currentUserService.UserId, claimId);
+
+        return Ok(ApiResponse<object>.Ok(
+            null!, "Claim cancelled successfully."));
     }
 }

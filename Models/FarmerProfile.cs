@@ -15,4 +15,6 @@ public class FarmerProfile : BaseEntity
 
     // Navigation
     public ICollection<Farm> Farms { get; set; } = new List<Farm>();
+    public ICollection<InsuranceClaim> Claims { get; set; }
+    = new List<InsuranceClaim>();
 }

@@ -158,6 +158,10 @@ public static class DependencyInjection
             BaseRepository<Farm>>();
         services.AddScoped<IRepository<Crop>,
             BaseRepository<Crop>>();
+        services.AddScoped<IClaimRepository, ClaimRepository>();
+        services.AddScoped<IInspectionRepository, InspectionRepository>();
+        services.AddScoped<IRepository<InsuranceClaim>,
+            BaseRepository<InsuranceClaim>>();
 
         // ── Services ───────────────────────────────────────────────────────
         services.AddScoped<IAuthService, AuthService>();
@@ -165,6 +169,7 @@ public static class DependencyInjection
         services.AddScoped<IUserService, UserService>();
         services.AddScoped<IFarmerService, FarmerService>();
         services.AddScoped<IAgentService, AgentService>();
+        services.AddScoped<IClaimRepository, ClaimRepository>();
 
         // ── HTTP Context + Cookie Helper ───────────────────────────────────
         services.AddHttpContextAccessor();

@@ -14,6 +14,8 @@ public class AppDbContext : DbContext
     public DbSet<AgentProfile> AgentProfiles => Set<AgentProfile>();
     public DbSet<Farm> Farms => Set<Farm>();
     public DbSet<Crop> Crops => Set<Crop>();
+    public DbSet<InsuranceClaim> Claims => Set<InsuranceClaim>();          // ← new
+    public DbSet<Inspection> Inspections => Set<Inspection>(); // ← new
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

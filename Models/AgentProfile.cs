@@ -11,4 +11,10 @@ public class AgentProfile : BaseEntity
     // FK
     public Guid UserId { get; set; }
     public User User { get; set; } = default!;
+
+    // Navigation
+    public ICollection<InsuranceClaim> Claims { get; set; }
+        = new List<InsuranceClaim>();
+    public ICollection<Inspection> Inspections { get; set; }
+        = new List<Inspection>();
 }
