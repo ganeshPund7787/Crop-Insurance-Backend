@@ -178,6 +178,8 @@ public static class DependencyInjection
         services.AddScoped<IFarmerService, FarmerService>();
         services.AddScoped<IAgentService, AgentService>();
         services.AddScoped<IClaimRepository, ClaimRepository>();
+        services.AddScoped<IAdminAgentRepository, AdminAgentRepository>();
+        services.AddScoped<IAdminService, AdminService>();
 
         // ── HTTP Context + Cookie Helper ───────────────────────────────────
         services.AddHttpContextAccessor();

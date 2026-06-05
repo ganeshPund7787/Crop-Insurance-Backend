@@ -3,6 +3,9 @@ using Authentication.Helpers;
 using Authentication.Interfaces;
 using Authentication.Models.Enums;
 using Authentication.Services;
+using Backend_Crop_Insurrance.DTOs.Admin;
+using Backend_Crop_Insurrance.Interfaces;
+using Backend_Crop_Insurrance.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -15,13 +18,17 @@ public class AdminController : ControllerBase
 {
     private readonly IUserService _userService;
     private readonly IAgentService _agentService;
+    private readonly IAdminService _adminService;
 
     public AdminController(
         IUserService userService,
-        IAgentService agentService)
+        IAgentService agentService,
+        IAdminService adminService
+        )
     {
         _userService = userService;
         _agentService = agentService;
+        _adminService = adminService;
     }
 
     // ─── GET api/admin/users/farmers ──────────────────────────────────────
@@ -35,15 +42,21 @@ public class AdminController : ControllerBase
     }
 
     // ─── GET api/admin/users/agents ───────────────────────────────────────
-    [HttpGet("users/agents")]
+    //[HttpGet("users/agents")]
+    //public async Task<IActionResult> GetAllAgents()
+    //{
+    //    var result = await _userService
+    //        .GetAllUsersByRoleAsync(UserRole.InsuranceAgent);
+
+    //    return Ok(ApiResponse<IEnumerable<UserProfileDto>>.Ok(result));
+    //}
+    [HttpGet("agents")]
     public async Task<IActionResult> GetAllAgents()
     {
-        var result = await _userService
-            .GetAllUsersByRoleAsync(UserRole.InsuranceAgent);
+        var result = await _adminService.GetAllAgentsAsync();
 
-        return Ok(ApiResponse<IEnumerable<UserProfileDto>>.Ok(result));
+        return Ok(ApiResponse<IEnumerable<AgentListItemDto>>.Ok(result));
     }
-
     // ─── PUT api/admin/users/{userId}/deactivate ──────────────────────────
     [HttpPut("users/{userId:guid}/deactivate")]
     public async Task<IActionResult> DeactivateUser(Guid userId)
