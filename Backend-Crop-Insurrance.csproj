@@ -7,6 +7,8 @@
     <RootNamespace>Backend_Crop_Insurrance</RootNamespace>
 	<NoWarn>NU1903</NoWarn>
     <UserSecretsId>a0f5b7f8-a916-486c-bf3a-d51f88ed3d10</UserSecretsId>
+    <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+    <DockerComposeProjectPath>..\docker-compose.dcproj</DockerComposeProjectPath>
   </PropertyGroup>
 
   <ItemGroup>
@@ -25,10 +27,19 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
+    <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.23.0" />
     <PackageReference Include="Serilog.AspNetCore" Version="10.0.0" />
     <PackageReference Include="Serilog.Sinks.Console" Version="6.1.1" />
     <PackageReference Include="Serilog.Sinks.File" Version="7.0.0" />
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.18.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EditorConfigFiles Remove="E:\.Net\Projects\Crop-Insurance-Farmer-Risk-Intelligence-Platform\Crop-Insurance\Backend-Crop-Insurrance\Backend-Crop-Insurrance\.editorconfig" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="E:\.Net\Projects\Crop-Insurance-Farmer-Risk-Intelligence-Platform\Crop-Insurance\Backend-Crop-Insurrance\Backend-Crop-Insurrance\.editorconfig" />
   </ItemGroup>
 
 </Project>
