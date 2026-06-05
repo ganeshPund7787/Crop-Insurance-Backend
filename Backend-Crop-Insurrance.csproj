@@ -34,12 +34,4 @@
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.18.0" />
   </ItemGroup>
 
-  <ItemGroup>
-    <EditorConfigFiles Remove="E:\.Net\Projects\Crop-Insurance-Farmer-Risk-Intelligence-Platform\Crop-Insurance\Backend-Crop-Insurrance\Backend-Crop-Insurrance\.editorconfig" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Include="E:\.Net\Projects\Crop-Insurance-Farmer-Risk-Intelligence-Platform\Crop-Insurance\Backend-Crop-Insurrance\Backend-Crop-Insurrance\.editorconfig" />
-  </ItemGroup>
-
 </Project>
