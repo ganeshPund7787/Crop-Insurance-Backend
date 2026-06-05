@@ -6,6 +6,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <RootNamespace>Backend_Crop_Insurrance</RootNamespace>
 	<NoWarn>NU1903</NoWarn>
+    <UserSecretsId>a0f5b7f8-a916-486c-bf3a-d51f88ed3d10</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>
