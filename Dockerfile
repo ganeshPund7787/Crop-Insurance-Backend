@@ -16,4 +16,4 @@ COPY --from=build /out .
 EXPOSE 8080
 ENV ASPNETCORE_URLS=http://+:8080
 
-ENTRYPOINT ["dotnet", "Crop-Insurance-Backend.dll"]
+ENTRYPOINT ["dotnet", "Backend-Crop-Insurrance.dll"]
