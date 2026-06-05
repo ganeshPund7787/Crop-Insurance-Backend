@@ -1,0 +1,1 @@
+﻿global using InsuranceClaim = Authentication.Models.InsuranceClaim;
