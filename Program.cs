@@ -28,17 +28,19 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 builder.Services.AddApplicationServices(builder.Configuration);
 builder.Services.AddControllers();
 
-//builder.Services.AddCors(options =>
-//{
-//    options.AddPolicy("AllowFrontend", policy => {
-//        policy.WithOrigins("http://localhost:5173")
-//              .AllowAnyHeader()
-//              .AllowAnyMethod()
-//              .AllowCredentials();   // ← required for cookies
-//    });
-//});
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowFrontend", policy =>
+    {
+        policy.WithOrigins("http://localhost:5173", "https://crop-shield-ai-henna.vercel.app")
+              .AllowAnyHeader()
+              .AllowAnyMethod()
+              .AllowCredentials();   // ← required for cookies
+    });
+});
 
 var app = builder.Build();
+
 
 // ── Auto migrate + seed on startup ────────────────────────────────────────
 using (var scope = app.Services.CreateScope())
@@ -57,9 +59,8 @@ using (var scope = app.Services.CreateScope())
 app.UseGlobalExceptionHandler();   // 1. Catch all exceptions
 app.UseSecurityHeaders();          // 2. Security headers on every response
 app.UseRequestLogging();           // 3. Log every request
-
 app.UseHttpsRedirection();         // 4. Force HTTPS
-app.UseCors("CropInsurancePolicy"); // 5. CORS before auth
+app.UseCors("AllowFrontend");
 app.UseRateLimiter();              // 6. Rate limiting
 app.UseAuthentication();           // 7. Validate JWT
 app.UseAuthorization();            // 8. Check roles/policies
